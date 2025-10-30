@@ -1,5 +1,7 @@
 "use client"
 
+import Link from "next/link"
+
 import { OverflowNavigationMenu } from "@/components/navigation/navigationMenu"
 import { cn } from "@/lib/utils"
 
@@ -22,7 +24,11 @@ export function AppNavbar({ className, logo, rightSlot, viewport }: AppNavbarPro
         className,
       )}
     >
-      {logo ? <div className="shrink-0 pr-2">{logo}</div> : null}
+      {logo ? (
+        <Link aria-label="Navigate home" className="shrink-0 pr-2" href="/">
+          {logo}
+        </Link>
+      ) : null}
       <div className="min-w-0 flex-1">
         <OverflowNavigationMenu items={items} viewport={viewport} />
       </div>

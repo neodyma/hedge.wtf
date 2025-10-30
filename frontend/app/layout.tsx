@@ -28,8 +28,8 @@ const oxygenMono = Oxygen_Mono({
 })
 
 export const metadata: Metadata = {
-  description: "hedge.xyt",
-  title: "hedge.xyz Solana Lending Protocol",
+  description: "hedge.wtf",
+  title: "hedge.wtf Solana Lending Protocol",
 }
 
 export default function RootLayout({

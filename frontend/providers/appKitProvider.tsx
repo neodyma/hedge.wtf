@@ -9,10 +9,10 @@ const solanaWeb3JsAdapter = new SolanaAdapter({
 })
 
 const metadata = {
-  description: "hedge.xyz Lending Protocol",
+  description: "hedge.wtf Lending Protocol",
   icons: [],
-  name: "hedge.xyz",
-  url: process.env.NODE_ENV === "development" ? "http://localhost:3001" : "https://hedge.xyz",
+  name: "hedge.wtf",
+  url: process.env.NODE_ENV === "development" ? "http://localhost:3001" : "https://hedge.wtf",
 }
 
 export const projectId = process.env["NEXT_PUBLIC_PROJECT_ID"] ?? "d5b42095aee2669c6889578955b3fb5c"
