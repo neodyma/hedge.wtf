@@ -1,6 +1,10 @@
+import { publicKey as toPk } from "@metaplex-foundation/umi"
+import { createUmi } from "@metaplex-foundation/umi-bundle-defaults"
 import { PublicKey } from "@solana/web3.js"
 import { NextRequest, NextResponse } from "next/server"
 
+import { getAssetRegistryGpaBuilder } from "@/clients/generated/accounts/assetRegistry"
+import { getPriceCacheGpaBuilder } from "@/clients/generated/accounts/priceCache"
 import { ZODIAL_V2_PROGRAM_ID } from "@/clients/generated/programs/zodialV2"
 import assetData from "@/data/combined_asset_data.json"
 import {
@@ -10,10 +14,6 @@ import {
 } from "@/lib/rpc/obligation-scanner"
 import { fetchAllPoolsFromRPC, type PoolFactors } from "@/lib/rpc/pool-fetcher"
 import { CACHE_KEYS, CACHE_TTL, serverCache } from "@/lib/rpc/server-cache"
-import { createUmi } from "@metaplex-foundation/umi-bundle-defaults"
-import { publicKey as toPk } from "@metaplex-foundation/umi"
-import { getAssetRegistryGpaBuilder } from "@/clients/generated/accounts/assetRegistry"
-import { getPriceCacheGpaBuilder } from "@/clients/generated/accounts/priceCache"
 
 const RPC_URL = process.env.NEXT_PUBLIC_RPC ?? "https://api.devnet.solana.com"
 const MARKET_ADDRESS = assetData._market.market
@@ -76,7 +76,14 @@ export async function GET(request: NextRequest) {
       console.log("[LeaderboardAPI] Fetching obligations from server cache...")
       obligationPdas = cachedPdas
       const obligations = await fetchObligationAccounts(RPC_URL, obligationPdas)
-      const result = generateLeaderboard(obligations, poolFactors, prices, decimals, offset, pageSize)
+      const result = generateLeaderboard(
+        obligations,
+        poolFactors,
+        prices,
+        decimals,
+        offset,
+        pageSize,
+      )
       leaderboard = result.entries
       totalEntries = result.totalEntries
       scannedAt = serverCache.get<string[]>(CACHE_KEYS.OBLIGATION_PDAS)?.scannedAt || Date.now()
@@ -110,10 +117,10 @@ export async function GET(request: NextRequest) {
         cached: !!cachedPdas,
         leaderboard,
         obligationCount: obligationPdas.length,
-        scannedAt,
-        totalEntries,
         page,
         pageSize,
+        scannedAt,
+        totalEntries,
         totalPages,
       },
       {
