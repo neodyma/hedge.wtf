@@ -69,12 +69,21 @@ export async function fetchAllPoolsFromRPC(
 
 /**
  * Convert deposit/borrow shares to token amounts
- * Formula: amount = (shares * factor) / 2^60
+ * Formula: amount = (shares * factor) / 2^60 / 2^60 / 10^decimals
+ *
+ * Q60 fixed-point format: value = rawValue / 2^60
+ * When multiplying two Q60 numbers (shares × factor), we get Q120
+ * Must divide by 2^60 twice to convert Q120 → normal number
  */
 export function sharesToAmount(sharesQ60: bigint, factorQ60: bigint, decimals: number): number {
   const Q60_SHIFT = 60n
-  const atomicAmount = (sharesQ60 * factorQ60) >> Q60_SHIFT
-  return Number(atomicAmount) / Math.pow(10, decimals)
+  // Step 1: shares (Q60) × factor (Q60) = Q120
+  // Step 2: Q120 / 2^60 = Q60 (atomic amount in Q60 format)
+  const totalQ60 = (sharesQ60 * factorQ60) / (2n ** Q60_SHIFT)
+  // Step 3: Q60 / 2^60 = normal number (atomic units)
+  const atomic = Number(totalQ60) / Number(2n ** Q60_SHIFT)
+  // Step 4: Convert atomic units to UI units
+  return atomic / Math.pow(10, decimals)
 }
 
 function findPoolPda(

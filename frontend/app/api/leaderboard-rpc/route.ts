@@ -10,6 +10,10 @@ import {
 } from "@/lib/rpc/obligation-scanner"
 import { fetchAllPoolsFromRPC, type PoolFactors } from "@/lib/rpc/pool-fetcher"
 import { CACHE_KEYS, CACHE_TTL, serverCache } from "@/lib/rpc/server-cache"
+import { createUmi } from "@metaplex-foundation/umi-bundle-defaults"
+import { publicKey as toPk } from "@metaplex-foundation/umi"
+import { getAssetRegistryGpaBuilder } from "@/clients/generated/accounts/assetRegistry"
+import { getPriceCacheGpaBuilder } from "@/clients/generated/accounts/priceCache"
 
 const RPC_URL = process.env.NEXT_PUBLIC_RPC ?? "https://api.devnet.solana.com"
 const MARKET_ADDRESS = assetData._market.market
@@ -19,15 +23,18 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const forceRefresh = searchParams.get("force_refresh") === "true"
-    const limit = parseInt(searchParams.get("limit") || "100", 10)
+    const page = parseInt(searchParams.get("page") || "1", 10)
+    const pageSize = parseInt(searchParams.get("pageSize") || "100", 10)
+
+    // Calculate offset for pagination
+    const offset = (page - 1) * pageSize
 
     console.log(
-      `[LeaderboardAPI] Request received - forceRefresh: ${forceRefresh}, limit: ${limit}`,
+      `[LeaderboardAPI] Request received - forceRefresh: ${forceRefresh}, page: ${page}, pageSize: ${pageSize}, offset: ${offset}`,
     )
 
-    const { decimals, mints, prices } = buildAssetMaps()
-
     const marketPubkey = new PublicKey(MARKET_ADDRESS)
+    const { decimals, mints, prices } = await buildAssetMapsFromOnChain(marketPubkey)
 
     let poolFactors: Map<string, PoolFactors>
 
@@ -59,16 +66,19 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    let leaderboard: Awaited<ReturnType<typeof generateLeaderboard>>
+    let leaderboard: Awaited<ReturnType<typeof generateLeaderboard>>["entries"]
     let obligationPdas: string[]
     let scannedAt: number
+    let totalEntries: number
 
     if (cachedPdas && cachedPdas.length > 0) {
       // Use cached PDAs and fetch fresh obligation data
       console.log("[LeaderboardAPI] Fetching obligations from server cache...")
       obligationPdas = cachedPdas
       const obligations = await fetchObligationAccounts(RPC_URL, obligationPdas)
-      leaderboard = generateLeaderboard(obligations, poolFactors, prices, decimals, limit)
+      const result = generateLeaderboard(obligations, poolFactors, prices, decimals, offset, pageSize)
+      leaderboard = result.entries
+      totalEntries = result.totalEntries
       scannedAt = serverCache.get<string[]>(CACHE_KEYS.OBLIGATION_PDAS)?.scannedAt || Date.now()
     } else {
       // Perform full scan with market filter
@@ -79,23 +89,32 @@ export async function GET(request: NextRequest) {
         poolFactors,
         prices,
         decimals,
-        limit,
+        offset,
+        pageSize,
       )
       leaderboard = result.leaderboard
       obligationPdas = result.obligationPdas
       scannedAt = result.scannedAt
+      totalEntries = result.totalEntries
 
       // Cache obligation PDAs on server (shared across all users)
       serverCache.set(CACHE_KEYS.OBLIGATION_PDAS, obligationPdas, CACHE_TTL.OBLIGATION_PDAS)
     }
 
-    // Return leaderboard data
+    // Calculate total pages
+    const totalPages = Math.ceil(totalEntries / pageSize)
+
+    // Return leaderboard data with pagination metadata
     return NextResponse.json(
       {
         cached: !!cachedPdas,
         leaderboard,
         obligationCount: obligationPdas.length,
         scannedAt,
+        totalEntries,
+        page,
+        pageSize,
+        totalPages,
       },
       {
         headers: {
@@ -116,38 +135,62 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Build asset price, decimals, and mints from combined_asset_data.json
-function buildAssetMaps(): {
+// Build asset price, decimals, and mints from on-chain AssetRegistry and PriceCache
+async function buildAssetMapsFromOnChain(marketPubkey: PublicKey): Promise<{
   decimals: Map<string, number>
   mints: string[]
   prices: Map<string, number>
-} {
-  const prices = new Map<string, number>()
+}> {
+  const umi = createUmi(RPC_URL)
+
+  // Fetch registry and price cache filtered by market
+  const marketUmiPk = toPk(marketPubkey.toBase58())
+  const [registryList, priceCacheList] = await Promise.all([
+    getAssetRegistryGpaBuilder(umi).whereField("market", marketUmiPk).getDeserialized(),
+    getPriceCacheGpaBuilder(umi).whereField("market", marketUmiPk).getDeserialized(),
+  ])
+
+  const registry = registryList[0] ?? null
+  const priceCache = priceCacheList[0] ?? null
+
+  if (!registry) {
+    throw new Error("AssetRegistry not found for market")
+  }
+
+  console.log(
+    `[LeaderboardAPI] Fetched registry with ${registry.assets.length} assets${
+      priceCache ? ", price cache entries: " + priceCache.prices.length : ", no price cache"
+    }`,
+  )
+
   const decimals = new Map<string, number>()
+  const prices = new Map<string, number>()
   const mints: string[] = []
 
-  Object.entries(assetData).forEach(([key, value]) => {
-    if (key === "_market") return
-
-    const asset = value as {
-      address?: string
-      decimals?: number
-      price?: { latest?: number }
-      zodial?: { mint?: string }
+  // Index price entries by assetIndex for quick lookup
+  const priceByIndex = new Map<number, number>()
+  if (priceCache) {
+    for (const entry of priceCache.prices) {
+      const px = Number(entry.priceQ60) / Number(1n << 60n)
+      priceByIndex.set(entry.assetIndex, px)
     }
+  }
 
-    const mint = asset.zodial?.mint || asset.address
-    if (!mint) return
+  registry.assets.forEach((asset, idx) => {
+    const mintStr = asset.mint.toString()
+    mints.push(mintStr)
 
-    const price = asset.price?.latest || 0
-    prices.set(mint, price)
+    // Decimals from registry (authoritative)
+    decimals.set(mintStr, asset.decimals)
 
-    const decimal = asset.decimals || 6
-    decimals.set(mint, decimal)
-
-    mints.push(mint)
+    // Price from cache when available, otherwise default to 0 (unknown)
+    const px = priceByIndex.get(idx) ?? 0
+    prices.set(mintStr, px)
   })
 
-  console.log(`[LeaderboardAPI] Loaded ${prices.size} asset prices and decimals`)
+  console.log(
+    `[LeaderboardAPI] Loaded ${prices.size} asset prices and ${decimals.size} decimals from on-chain data`,
+  )
+
   return { decimals, mints, prices }
 }

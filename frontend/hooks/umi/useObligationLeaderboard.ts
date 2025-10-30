@@ -19,24 +19,31 @@ export interface LeaderboardResponse {
   leaderboard: LeaderboardEntry[]
   obligationCount: number
   scannedAt: number
+  totalEntries: number
+  page: number
+  pageSize: number
+  totalPages: number
 }
 
 /**
- * Hook for fetching obligation leaderboard
+ * Hook for fetching obligation leaderboard with pagination support
  * - Server-side caching is automatic (shared across all users)
  * - Auto-refreshes every 30 seconds for updated values
  * - Uses TanStack Query for client-side caching
+ * - Supports pagination via page and pageSize options
  */
 export function useObligationLeaderboard(options?: {
   enabled?: boolean
+  page?: number
+  pageSize?: number
   refetchInterval?: number
 }) {
-  const { enabled = true, refetchInterval = 30_000 } = options || {}
+  const { enabled = true, page = 1, pageSize = 100, refetchInterval = 30_000 } = options || {}
 
   return useQuery({
     enabled,
-    queryFn: () => fetchLeaderboard(false),
-    queryKey: ["leaderboard-rpc"],
+    queryFn: () => fetchLeaderboard(false, page, pageSize),
+    queryKey: ["leaderboard-rpc", page, pageSize],
     refetchInterval, // Auto-refresh every 30 seconds
     retry: 2, // Retry failed requests twice
     staleTime: 30_000, // Consider data stale after 30 seconds
@@ -55,13 +62,19 @@ export function useRefreshLeaderboard() {
 }
 
 /**
- * Fetch leaderboard data from RPC API
+ * Fetch leaderboard data from RPC API with pagination
  */
-async function fetchLeaderboard(forceRefresh = false): Promise<LeaderboardResponse> {
+async function fetchLeaderboard(
+  forceRefresh = false,
+  page = 1,
+  pageSize = 100,
+): Promise<LeaderboardResponse> {
   const url = new URL("/api/leaderboard-rpc", window.location.origin)
   if (forceRefresh) {
     url.searchParams.set("force_refresh", "true")
   }
+  url.searchParams.set("page", page.toString())
+  url.searchParams.set("pageSize", pageSize.toString())
 
   const response = await fetch(url.toString(), {
     headers: {

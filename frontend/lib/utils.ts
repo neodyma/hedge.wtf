@@ -39,3 +39,31 @@ export function uiToRaw(ui: number | string, decimals: number): BN {
   const fracPadded = (frac + "0".repeat(decimals)).slice(0, decimals)
   return new BN(whole + fracPadded)
 }
+
+export function formatNumberWithSuffix(num: number): string {
+  if (num >= 1e9) {
+    return (num / 1e9).toFixed(2).replace(/\.?0+$/, "") + "b"
+  } else if (num >= 1e6) {
+    return (num / 1e6).toFixed(2).replace(/\.?0+$/, "") + "m"
+  } else if (num >= 1e3) {
+    return (num / 1e3).toFixed(2).replace(/\.?0+$/, "") + "k"
+  } else {
+    return num.toFixed(2).replace(/\.?0+$/, "")
+  }
+}
+
+/**
+ * Safely multiplies two numbers with finite validation
+ * Returns 0 if result is not finite
+ */
+export function safeMultiply(a: number, b: number): number {
+  const result = a * b
+  return Number.isFinite(result) ? result : 0
+}
+
+/**
+ * Validates that a price is valid (positive and finite)
+ */
+export function isValidPrice(price: number | null | undefined): boolean {
+  return typeof price === "number" && Number.isFinite(price) && price > 0
+}

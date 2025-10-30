@@ -11,6 +11,7 @@ import type { PriceCache } from "@/clients/generated/accounts/priceCache"
 
 import { safeFetchFaucetMint } from "@/clients/generated/accounts/faucetMint"
 import SwapDialog from "@/components/dialogs/SwapDialog"
+import HealthScoreCard from "@/components/HealthScoreCard"
 import MetricsRow from "@/components/MetricsRow"
 import DataTable, { Column } from "@/components/tables/DataTable"
 // import { PortfolioHistoryChart } from "@/components/base/PortfolioHistoryChart"
@@ -24,7 +25,8 @@ import { useFaucet } from "@/hooks/umi/mutations"
 import { type PortfolioWalletBalance, usePortfolioSnapshot } from "@/hooks/umi/usePortfolioSnapshot"
 import { useSolanaWallet } from "@/hooks/useSolanaWallet"
 import { TutorialBar, TutorialProvider } from "@/hooks/useTutorial"
-import { getHealthScoreWithLt, getProjectedApy } from "@/lib/portfolio"
+import { getHealthScoreWithLt, getProjectedApy, getPairLtFromRegistry } from "@/lib/portfolio"
+import { getAssetByMint } from "@/lib/riskParameterQuery"
 import { type EnrichedPool } from "@/lib/umi/pool-utils"
 import { calculateCurrentApys } from "@/lib/umi/rate-calculations"
 import { formatCurrency } from "@/lib/utils"
@@ -42,6 +44,7 @@ export default function PortfolioPage() {
     portfolioRefresh,
     priceCache,
     registry,
+    riskRegistry,
     walletBalances,
     walletBalancesQuery,
     wrappedPositions,
@@ -57,8 +60,28 @@ export default function PortfolioPage() {
   const balances = walletBalances
   const wrapped = wrappedPositions
 
-  // TODO: effectiveLt from on-chain risk matrix
-  const effectiveLt = useCallback((_a?: number, _b?: number, defaultLt = 0.9) => defaultLt, [])
+  // Get liquidation threshold from on-chain RiskRegistry
+  const effectiveLt = useCallback(
+    (depositId?: number, borrowId?: number, defaultLt = 0.9) => {
+      if (depositId == null || borrowId == null) return defaultLt
+
+      // Map registry indices to true CoinMarketCap IDs via mint addresses
+      const toCmcId = (id: number): number | null => {
+        const asset = assets.find((a) => a.index === id || a.cmc_id === id)
+        const mint = asset?.mint
+        const info = mint ? getAssetByMint(mint) : null
+        return info?.cmcId ?? null
+      }
+
+      const depCmc = toCmcId(depositId)
+      const borCmc = toCmcId(borrowId)
+
+      if (!depCmc || !borCmc) return defaultLt
+
+      return getPairLtFromRegistry(depCmc, borCmc, registry, riskRegistry)
+    },
+    [assets, registry, riskRegistry],
+  )
 
   const balancesDisabled = bStatus === "pending" && bFetch === "idle"
   const obligationsDisabled = oStatus === "pending" && oFetch === "idle"
@@ -196,6 +219,14 @@ export default function PortfolioPage() {
               priceCache={priceCache ?? null}
               registry={registry ?? null}
               selectedMarket={selectedMarket ?? undefined}
+            />
+
+            <HealthScoreCard
+              wrapped={wrapped}
+              depositWorth={depositWorth}
+              borrowWorth={borrowWorth}
+              assetRegistry={registry}
+              riskRegistry={riskRegistry}
             />
           </motion.div>
         </div>
