@@ -3,5 +3,9 @@
 import Leaderboard from "@/components/tables/Leaderboard"
 
 export default function LeaderboardPage() {
-  return <Leaderboard />
+  return (
+    <div className="md:m-8">
+      <Leaderboard />
+    </div>
+  )
 }

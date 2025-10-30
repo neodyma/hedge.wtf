@@ -54,7 +54,7 @@ export default function MarketPage() {
       initial={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
     >
-      <Card className="border-border bg-card scrollbar-hide shadow md:m-8">
+      <Card className="border-foreground bg-card scrollbar-hide rounded-xs border-2 shadow md:m-8">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="font-semibold tracking-tight">
             Market Overview (Devnet)
@@ -102,7 +102,7 @@ export default function MarketPage() {
 
                   return (
                     <tr
-                      className="border-border hover:bg-accent/50 cursor-pointer border-t transition-colors"
+                      className="border-foreground hover:bg-accent/50 cursor-pointer border-t transition-colors"
                       key={pool.pool.mint.toString()}
                       onClick={() => handleRowClick(pool)}
                     >
@@ -158,7 +158,7 @@ export default function MarketPage() {
       </Card>
 
       {!publicKey && (
-        <Card className="border-border bg-muted/50 mt-4 border md:m-8">
+        <Card className="border-foreground bg-card/80 mt-4 rounded-xs border-2 md:m-8">
           <CardContent className="py-4 text-center">
             <p className="text-muted-foreground text-sm">
               Connect your wallet to view personalized market data

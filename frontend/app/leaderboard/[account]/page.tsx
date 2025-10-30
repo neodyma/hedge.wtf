@@ -199,7 +199,7 @@ export default function UserPortfolioPage() {
 
           <motion.div
             animate={{ opacity: 1, y: 0 }}
-            className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2"
+            className="mt-4 grid grid-cols-1 gap-4 px-16 lg:grid-cols-2"
             initial={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
           >
@@ -225,7 +225,7 @@ function PositionsCard({ positions, title }: { positions: Position[]; title: str
   ]
 
   return (
-    <Card className="border-border bg-card shadow">
+    <Card className="border-foreground bg-card rounded-xs border-2 shadow">
       <CardHeader className="pb-3">
         <CardTitle className="font-semibold tracking-tight">{title}</CardTitle>
       </CardHeader>
