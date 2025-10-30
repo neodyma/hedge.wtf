@@ -25,7 +25,7 @@ import { useFaucet } from "@/hooks/umi/mutations"
 import { type PortfolioWalletBalance, usePortfolioSnapshot } from "@/hooks/umi/usePortfolioSnapshot"
 import { useSolanaWallet } from "@/hooks/useSolanaWallet"
 import { TutorialBar, TutorialProvider } from "@/hooks/useTutorial"
-import { getHealthScoreWithLt, getProjectedApy, getPairLtFromRegistry } from "@/lib/portfolio"
+import { getHealthScoreWithLt, getPairLtFromRegistry, getProjectedApy } from "@/lib/portfolio"
 import { getAssetByMint } from "@/lib/riskParameterQuery"
 import { type EnrichedPool } from "@/lib/umi/pool-utils"
 import { calculateCurrentApys } from "@/lib/umi/rate-calculations"
@@ -66,7 +66,7 @@ export default function PortfolioPage() {
       if (depositId == null || borrowId == null) return defaultLt
 
       // Map registry indices to true CoinMarketCap IDs via mint addresses
-      const toCmcId = (id: number): number | null => {
+      const toCmcId = (id: number): null | number => {
         const asset = assets.find((a) => a.index === id || a.cmc_id === id)
         const mint = asset?.mint
         const info = mint ? getAssetByMint(mint) : null
@@ -222,11 +222,11 @@ export default function PortfolioPage() {
             />
 
             <HealthScoreCard
-              wrapped={wrapped}
-              depositWorth={depositWorth}
-              borrowWorth={borrowWorth}
               assetRegistry={registry}
+              borrowWorth={borrowWorth}
+              depositWorth={depositWorth}
               riskRegistry={riskRegistry}
+              wrapped={wrapped}
             />
           </motion.div>
         </div>
