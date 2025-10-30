@@ -9,14 +9,14 @@ import {
   ShieldCheck,
   Sparkles,
   TrendingUp,
-  Users,
+  // Users,
   Zap,
 } from "lucide-react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
+// import { cn } from "@/lib/utils"
 
 type Feature = {
   description: string
@@ -29,16 +29,16 @@ type Metric = {
   value: string
 }
 
-type Step = {
-  description: string
-  title: string
-}
+// type Step = {
+//   description: string
+//   title: string
+// }
 
-type Testimonial = {
-  name: string
-  quote: string
-  role: string
-}
+// type Testimonial = {
+//   name: string
+//   quote: string
+//   role: string
+// }
 
 const featureHighlights: Feature[] = [
   {
@@ -54,14 +54,12 @@ const featureHighlights: Feature[] = [
     title: "Adaptive Risk Engine",
   },
   {
-    description:
-      "Helping users diversify exposure across assets.",
+    description: "Helping users diversify exposure across assets.",
     icon: Layers,
     title: "Allowing every usecase",
   },
   {
-    description:
-      "Discover new assets and take position on the latest market trends.",
+    description: "Discover new assets and take position on the latest market trends.",
     icon: Sparkles,
     title: "One Market for Everyone",
   },
@@ -73,57 +71,51 @@ const heroCards: Metric[] = [
   { label: "Liquidation-free days", value: "182" },
 ]
 
+// const keyMetrics: Metric[] = [
+//   { label: "Risk-adjusted borrows", value: "$62.1M" },
+//   { label: "Capital efficiency boost", value: "32%" },
+//   { label: "Institutions onboarded", value: "120+" },
+// ]
 
+// const onboardingSteps: Step[] = [
+//   {
+//     description:
+//       "Link any Solana wallet or custody solution to get instant access to pools and on-chain analytics.",
+//     title: "Connect your wallet",
+//   },
+//   {
+//     description:
+//       "Deploy capital into curated pools or craft custom hedged positions with per-asset transparency.",
+//     title: "Choose your strategy",
+//   },
+//   {
+//     description:
+//       "Enable guardrails, alerts, and auto-rollovers so positions stay optimal through market swings.",
+//     title: "Automate performance",
+//   },
+// ]
 
-const keyMetrics: Metric[] = [
-  { label: "Risk-adjusted borrows", value: "$62.1M" },
-  { label: "Capital efficiency boost", value: "32%" },
-  { label: "Institutions onboarded", value: "120+" },
-]
-
-const onboardingSteps: Step[] = [
-  {
-    description:
-      "Link any Solana wallet or custody solution to get instant access to pools and on-chain analytics.",
-    title: "Connect your wallet",
-  },
-  {
-    description:
-      "Deploy capital into curated pools or craft custom hedged positions with per-asset transparency.",
-    title: "Choose your strategy",
-  },
-  {
-    description:
-      "Enable guardrails, alerts, and auto-rollovers so positions stay optimal through market swings.",
-    title: "Automate performance",
-  },
-]
-
-const partnerLogos: string[] = [
-  "Solana",
-  "Pyth Network",
-  "Helius",
-]
+const partnerLogos: string[] = ["Solana", "Pyth Network", "Helius"]
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 32 },
   visible: { opacity: 1, y: 0 },
 }
 
-const testimonials: Testimonial[] = [
-  {
-    name: "Ava Moreno",
-    quote:
-      "Hedge.wtf helps our desk deploy idle stables without sacrificing responsiveness. Risk controls are responsive and transparent.",
-    role: "Principal, Meridian Digital Assets",
-  },
-  {
-    name: "Noah Choi",
-    quote:
-      "The protocol's modular SDK let us integrate lending into our consumer app in weeks, not months. Our users love the UX.",
-    role: "Lead Engineer, Orbital Labs",
-  },
-]
+// const testimonials: Testimonial[] = [
+//   {
+//     name: "Ava Moreno",
+//     quote:
+//       "Hedge.wtf helps our desk deploy idle stables without sacrificing responsiveness. Risk controls are responsive and transparent.",
+//     role: "Principal, Meridian Digital Assets",
+//   },
+//   {
+//     name: "Noah Choi",
+//     quote:
+//       "The protocol's modular SDK let us integrate lending into our consumer app in weeks, not months. Our users love the UX.",
+//     role: "Lead Engineer, Orbital Labs",
+//   },
+// ]
 
 const listStagger = {
   hidden: {},
@@ -180,8 +172,7 @@ const HeroSection = () => (
         className="text-foreground mt-4 text-4xl leading-tight font-[500] tracking-tight sm:text-5xl lg:text-6xl"
         variants={sectionVariants}
       >
-        One Market.
-        Infinite Use Cases.
+        One Market. Infinite Use Cases.
       </motion.h1>
 
       <motion.p
@@ -196,18 +187,17 @@ const HeroSection = () => (
         variants={sectionVariants}
       >
         <Button asChild className="w-full sm:w-auto" size="lg">
-          <Link href="/market">
+          <Link href="/portfolio">
             Launch app
             <ArrowRight className="size-4" />
           </Link>
         </Button>
-        <Button asChild className="w-full sm:w-auto" size="lg" variant="outline">
+        {/* <Button asChild className="w-full sm:w-auto" size="lg" variant="outline">
           <Link href="https://docs.hedge.wtf" rel="noreferrer" target="_blank">
             View docs
           </Link>
-        </Button>
+        </Button> */}
       </motion.div>
-
     </motion.div>
 
     <motion.div
@@ -238,7 +228,6 @@ const HeroSection = () => (
               </motion.div>
             ))}
           </div>
-
         </CardContent>
       </Card>
       <motion.div
@@ -281,7 +270,6 @@ const PartnersSection = () => (
   </motion.section>
 )
 
-
 const FeaturesSection = () => (
   <motion.section
     animate="visible"
@@ -295,8 +283,7 @@ const FeaturesSection = () => (
     <SectionHeading
       description="."
       eyebrow="Why hedge.wtf"
-      title="Open-source.
-Stress-tested. Countless times."
+      title="Open-source. Stress-tested. Countless times."
     />
     <div className="grid gap-4 md:grid-cols-2">
       {featureHighlights.map((feature) => (
@@ -306,122 +293,122 @@ Stress-tested. Countless times."
   </motion.section>
 )
 
-const HowItWorksSection = () => (
-  <motion.section
-    animate="visible"
-    className="flex flex-col gap-10"
-    initial="hidden"
-    transition={{ duration: 0.5, ease: "easeOut" }}
-    variants={sectionVariants}
-    viewport={{ amount: 0.2, once: true }}
-    whileInView="visible"
-  >
-    <SectionHeading
-      description="Pair your custodial stack with our automation suite and bring on-chain credit to your workflow."
-      eyebrow="Onboarding flow"
-      title="From discovery to deployment in minutes."
-    />
-    <div className="grid gap-6 md:grid-cols-3">
-      {onboardingSteps.map((step, index) => (
-        <motion.div
-          className={cn(
-            "border-foreground/20 bg-card/80 relative rounded-xs border p-6 backdrop-blur",
-            "md:bg-card/70 md:border",
-          )}
-          key={step.title}
-          variants={sectionVariants}
-        >
-          <div className="border-primary/40 bg-primary/10 text-primary absolute top-0 left-6 -translate-y-1/2 rounded-full border px-3 py-1 font-mono text-xs md:left-1/2 md:-translate-x-1/2">
-            {String(index + 1).padStart(2, "0")}
-          </div>
-          <div className="mt-6 space-y-3 text-left md:mt-10">
-            <h3 className="text-xl font-semibold tracking-tight">{step.title}</h3>
-            <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
-          </div>
-        </motion.div>
-      ))}
-    </div>
-  </motion.section>
-)
+// const HowItWorksSection = () => (
+//   <motion.section
+//     animate="visible"
+//     className="flex flex-col gap-10"
+//     initial="hidden"
+//     transition={{ duration: 0.5, ease: "easeOut" }}
+//     variants={sectionVariants}
+//     viewport={{ amount: 0.2, once: true }}
+//     whileInView="visible"
+//   >
+//     <SectionHeading
+//       description="Pair your custodial stack with our automation suite and bring on-chain credit to your workflow."
+//       eyebrow="Onboarding flow"
+//       title="From discovery to deployment in minutes."
+//     />
+//     <div className="grid gap-6 md:grid-cols-3">
+//       {onboardingSteps.map((step, index) => (
+//         <motion.div
+//           className={cn(
+//             "border-foreground/20 bg-card/80 relative rounded-xs border p-6 backdrop-blur",
+//             "md:bg-card/70 md:border",
+//           )}
+//           key={step.title}
+//           variants={sectionVariants}
+//         >
+//           <div className="border-primary/40 bg-primary/10 text-primary absolute top-0 left-6 -translate-y-1/2 rounded-full border px-3 py-1 font-mono text-xs md:left-1/2 md:-translate-x-1/2">
+//             {String(index + 1).padStart(2, "0")}
+//           </div>
+//           <div className="mt-6 space-y-3 text-left md:mt-10">
+//             <h3 className="text-xl font-semibold tracking-tight">{step.title}</h3>
+//             <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
+//           </div>
+//         </motion.div>
+//       ))}
+//     </div>
+//   </motion.section>
+// )
 
-const CommunitySection = () => (
-  <motion.section
-    animate="visible"
-    className="flex flex-col gap-10"
-    initial="hidden"
-    transition={{ duration: 0.5, ease: "easeOut" }}
-    variants={sectionVariants}
-    viewport={{ amount: 0.2, once: true }}
-    whileInView="visible"
-  >
-    <SectionHeading
-      description="Join a growing set of funds, protocols, and builders expanding what composable credit can do."
-      eyebrow="Voices from the network"
-      title="Community operators scaling with hedge.wtf."
-    />
-    <div className="grid gap-4 md:grid-cols-2">
-      {testimonials.map((testimonial) => (
-        <motion.div
-          className="border-foreground/20 bg-secondary/40 rounded-xs border p-6 shadow-sm backdrop-blur"
-          key={testimonial.name}
-          variants={sectionVariants}
-        >
-          <p className="text-foreground text-base leading-relaxed">
-            &ldquo;{testimonial.quote}&rdquo;
-          </p>
-          <div className="mt-4 text-sm">
-            <div className="font-semibold">{testimonial.name}</div>
-            <div className="text-muted-foreground">{testimonial.role}</div>
-          </div>
-        </motion.div>
-      ))}
-    </div>
-  </motion.section>
-)
+// const CommunitySection = () => (
+//   <motion.section
+//     animate="visible"
+//     className="flex flex-col gap-10"
+//     initial="hidden"
+//     transition={{ duration: 0.5, ease: "easeOut" }}
+//     variants={sectionVariants}
+//     viewport={{ amount: 0.2, once: true }}
+//     whileInView="visible"
+//   >
+//     <SectionHeading
+//       description="Join a growing set of funds, protocols, and builders expanding what composable credit can do."
+//       eyebrow="Voices from the network"
+//       title="Community operators scaling with hedge.wtf."
+//     />
+//     <div className="grid gap-4 md:grid-cols-2">
+//       {testimonials.map((testimonial) => (
+//         <motion.div
+//           className="border-foreground/20 bg-secondary/40 rounded-xs border p-6 shadow-sm backdrop-blur"
+//           key={testimonial.name}
+//           variants={sectionVariants}
+//         >
+//           <p className="text-foreground text-base leading-relaxed">
+//             &ldquo;{testimonial.quote}&rdquo;
+//           </p>
+//           <div className="mt-4 text-sm">
+//             <div className="font-semibold">{testimonial.name}</div>
+//             <div className="text-muted-foreground">{testimonial.role}</div>
+//           </div>
+//         </motion.div>
+//       ))}
+//     </div>
+//   </motion.section>
+// )
 
-const FinalCtaSection = () => (
-  <motion.section
-    animate="visible"
-    className="border-primary/20 bg-primary/10 relative overflow-hidden rounded-2xl border p-8 sm:p-10 md:p-12"
-    initial="hidden"
-    transition={{ duration: 0.5, ease: "easeOut" }}
-    variants={sectionVariants}
-    viewport={{ amount: 0.2, once: true }}
-    whileInView="visible"
-  >
-    <motion.div
-      animate={{ opacity: [0.2, 0.5, 0.2] }}
-      aria-hidden
-      className="bg-primary/40 absolute -top-24 right-10 hidden h-48 w-48 rounded-full blur-3xl md:block"
-      transition={{ duration: 6, ease: "easeInOut", repeat: Infinity }}
-    />
-    <div className="relative flex flex-col gap-6 text-center md:flex-row md:items-center md:justify-between md:text-left">
-      <div className="space-y-3">
-        <div className="text-primary font-mono text-xs tracking-[0.32em] uppercase">
-          Ready to deploy
-        </div>
-        <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Build your next-generation credit stack with hedge.wtf.
-        </h2>
-        <p className="text-muted-foreground text-base leading-relaxed">
-          Access production-ready infrastructure, partner integrations, and comprehensive support to
-          launch with confidence.
-        </p>
-      </div>
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Button asChild size="lg" variant="secondary">
-          <Link href="/portfolio">Explore dashboard</Link>
-        </Button>
-        <Button asChild size="lg" variant="outline">
-          <Link href="mailto:bd@hedge.wtf">
-            Talk to us
-            <Users className="size-4" />
-          </Link>
-        </Button>
-      </div>
-    </div>
-  </motion.section>
-)
+// const FinalCtaSection = () => (
+//   <motion.section
+//     animate="visible"
+//     className="border-primary/20 bg-primary/10 relative overflow-hidden rounded-2xl border p-8 sm:p-10 md:p-12"
+//     initial="hidden"
+//     transition={{ duration: 0.5, ease: "easeOut" }}
+//     variants={sectionVariants}
+//     viewport={{ amount: 0.2, once: true }}
+//     whileInView="visible"
+//   >
+//     <motion.div
+//       animate={{ opacity: [0.2, 0.5, 0.2] }}
+//       aria-hidden
+//       className="bg-primary/40 absolute -top-24 right-10 hidden h-48 w-48 rounded-full blur-3xl md:block"
+//       transition={{ duration: 6, ease: "easeInOut", repeat: Infinity }}
+//     />
+//     <div className="relative flex flex-col gap-6 text-center md:flex-row md:items-center md:justify-between md:text-left">
+//       <div className="space-y-3">
+//         <div className="text-primary font-mono text-xs tracking-[0.32em] uppercase">
+//           Ready to deploy
+//         </div>
+//         <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+//           Build your next-generation credit stack with hedge.wtf.
+//         </h2>
+//         <p className="text-muted-foreground text-base leading-relaxed">
+//           Access production-ready infrastructure, partner integrations, and comprehensive support to
+//           launch with confidence.
+//         </p>
+//       </div>
+//       <div className="flex flex-col gap-3 sm:flex-row">
+//         <Button asChild size="lg" variant="secondary">
+//           <Link href="/portfolio">Explore dashboard</Link>
+//         </Button>
+//         <Button asChild size="lg" variant="outline">
+//           <Link href="mailto:bd@hedge.wtf">
+//             Talk to us
+//             <Users className="size-4" />
+//           </Link>
+//         </Button>
+//       </div>
+//     </div>
+//   </motion.section>
+// )
 
 type FeatureCardProps = {
   feature: Feature
