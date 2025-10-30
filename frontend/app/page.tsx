@@ -181,7 +181,7 @@ const HeroSection = () => (
         variants={sectionVariants}
       >
         One Market.
-        Infinite UseCases.
+        Infinite Use Cases.
       </motion.h1>
 
       <motion.p
