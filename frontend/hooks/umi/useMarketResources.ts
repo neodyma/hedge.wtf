@@ -8,6 +8,7 @@ import type { AssetRegistry } from "@/clients/generated/accounts/assetRegistry"
 import type { Market } from "@/clients/generated/accounts/market"
 import type { Pool } from "@/clients/generated/accounts/pool"
 import type { PriceCache } from "@/clients/generated/accounts/priceCache"
+import type { RiskRegistry } from "@/clients/generated/accounts/riskRegistry"
 
 import {
   useAssetRegistryByMarket,
@@ -16,6 +17,7 @@ import {
   usePoolsByMarket,
   usePriceCacheByMarket,
 } from "@/hooks/umi/queries"
+import { useRiskRegistryByMarket } from "@/hooks/umi/useRiskRegistry"
 import { type EnrichedPool, enrichPools } from "@/lib/umi/pool-utils"
 
 export interface UseMarketResourcesOptions {
@@ -39,8 +41,10 @@ export interface UseMarketResourcesResult {
     pools: ReturnType<typeof usePoolsByMarket>
     priceCache: ReturnType<typeof usePriceCacheByMarket>
     registry: ReturnType<typeof useAssetRegistryByMarket>
+    riskRegistry: ReturnType<typeof useRiskRegistryByMarket>
   }
   registry: AssetRegistry | null
+  riskRegistry: RiskRegistry | null
 }
 
 type MaybePublicKey = null | string | UmiPublicKey | undefined
@@ -87,6 +91,11 @@ export function useMarketResources(options?: UseMarketResourcesOptions): UseMark
     staleTimeMs: options?.staleTimeMs,
   })
 
+  const riskRegistry = useRiskRegistryByMarket(activeMarketPk ?? undefined, {
+    enabled: options?.enabled !== false && Boolean(activeMarketPk),
+    staleTimeMs: options?.staleTimeMs,
+  })
+
   const enrichedPools = useMemo(
     () => enrichPools(pools.data ?? [], registry.data ?? null, priceCache.data ?? null),
     [pools.data, registry.data, priceCache.data],
@@ -100,9 +109,11 @@ export function useMarketResources(options?: UseMarketResourcesOptions): UseMark
     marketQuery.isLoading ||
     registry.isLoading ||
     pools.isLoading ||
-    priceCache.isLoading
+    priceCache.isLoading ||
+    riskRegistry.isLoading
   const isReady =
-    !isLoading && Boolean(activeMarketPk && registry.data && pools.data && priceCache.data)
+    !isLoading &&
+    Boolean(activeMarketPk && registry.data && pools.data && priceCache.data && riskRegistry.data)
 
   return {
     enrichedPools,
@@ -119,7 +130,9 @@ export function useMarketResources(options?: UseMarketResourcesOptions): UseMark
       pools,
       priceCache,
       registry,
+      riskRegistry,
     },
     registry: registry.data ?? null,
+    riskRegistry: riskRegistry.data ?? null,
   }
 }

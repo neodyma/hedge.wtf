@@ -13,165 +13,41 @@ import {
   Signer,
   TransactionBuilder,
   transactionBuilder,
-} from "@metaplex-foundation/umi"
+} from '@metaplex-foundation/umi';
 import {
+  Serializer,
   bytes,
   mapSerializer,
   publicKey as publicKeySerializer,
-  Serializer,
   struct,
   u64,
-} from "@metaplex-foundation/umi/serializers"
-
+} from '@metaplex-foundation/umi/serializers';
 import {
-  expectPublicKey,
-  getAccountMetasAndSigners,
   ResolvedAccount,
   ResolvedAccountsWithIndices,
-} from "../shared"
+  expectPublicKey,
+  getAccountMetasAndSigners,
+} from '../shared';
 
 // Accounts.
 export type FaucetInstructionAccounts = {
-  associatedTokenProgram?: Pda | PublicKey
-  faucetMint: Pda | PublicKey
-  mint: Pda | PublicKey
-  mintAuthority?: Pda | PublicKey
-  systemProgram?: Pda | PublicKey
-  tokenProgram?: Pda | PublicKey
-  user: Signer
-  userTokenAccount?: Pda | PublicKey
-}
-
-// Args.
-export type FaucetInstructionArgs = FaucetInstructionDataArgs
+  user: Signer;
+  faucetMint: PublicKey | Pda;
+  mintAuthority?: PublicKey | Pda;
+  mint: PublicKey | Pda;
+  userTokenAccount?: PublicKey | Pda;
+  tokenProgram?: PublicKey | Pda;
+  associatedTokenProgram?: PublicKey | Pda;
+  systemProgram?: PublicKey | Pda;
+};
 
 // Data.
 export type FaucetInstructionData = {
-  amount: bigint
-  discriminator: Uint8Array
-}
+  discriminator: Uint8Array;
+  amount: bigint;
+};
 
-export type FaucetInstructionDataArgs = { amount: bigint | number }
-
-// Instruction.
-export function faucet(
-  context: Pick<Context, "eddsa" | "programs">,
-  input: FaucetInstructionAccounts & FaucetInstructionArgs,
-): TransactionBuilder {
-  // Program ID.
-  const programId = context.programs.getPublicKey(
-    "zodialV2",
-    "5E1ikr753b8RQZdtohZAY8wmpjn2hu9dWzrN5xEasmtu",
-  )
-
-  // Accounts.
-  const resolvedAccounts = {
-    associatedTokenProgram: {
-      index: 6,
-      isWritable: false as boolean,
-      value: input.associatedTokenProgram ?? null,
-    },
-    faucetMint: {
-      index: 1,
-      isWritable: false as boolean,
-      value: input.faucetMint ?? null,
-    },
-    mint: { index: 3, isWritable: true as boolean, value: input.mint ?? null },
-    mintAuthority: {
-      index: 2,
-      isWritable: false as boolean,
-      value: input.mintAuthority ?? null,
-    },
-    systemProgram: {
-      index: 7,
-      isWritable: false as boolean,
-      value: input.systemProgram ?? null,
-    },
-    tokenProgram: {
-      index: 5,
-      isWritable: false as boolean,
-      value: input.tokenProgram ?? null,
-    },
-    user: { index: 0, isWritable: true as boolean, value: input.user ?? null },
-    userTokenAccount: {
-      index: 4,
-      isWritable: true as boolean,
-      value: input.userTokenAccount ?? null,
-    },
-  } satisfies ResolvedAccountsWithIndices
-
-  // Arguments.
-  const resolvedArgs: FaucetInstructionArgs = { ...input }
-
-  // Default values.
-  if (!resolvedAccounts.mintAuthority.value) {
-    resolvedAccounts.mintAuthority.value = context.eddsa.findPda(programId, [
-      bytes().serialize(
-        new Uint8Array([102, 97, 117, 99, 101, 116, 45, 109, 105, 110, 116, 45, 97, 117, 116, 104]),
-      ),
-      publicKeySerializer().serialize(expectPublicKey(resolvedAccounts.faucetMint.value)),
-    ])
-  }
-  if (!resolvedAccounts.userTokenAccount.value) {
-    resolvedAccounts.userTokenAccount.value = context.eddsa.findPda(
-      context.programs.getPublicKey(
-        "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-        "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-      ),
-      [
-        publicKeySerializer().serialize(expectPublicKey(resolvedAccounts.user.value)),
-        bytes().serialize(
-          new Uint8Array([
-            6, 221, 246, 225, 215, 101, 161, 147, 217, 203, 225, 70, 206, 235, 121, 172, 28, 180,
-            133, 237, 95, 91, 55, 145, 58, 140, 245, 133, 126, 255, 0, 169,
-          ]),
-        ),
-        publicKeySerializer().serialize(expectPublicKey(resolvedAccounts.mint.value)),
-      ],
-    )
-  }
-  if (!resolvedAccounts.tokenProgram.value) {
-    resolvedAccounts.tokenProgram.value = context.programs.getPublicKey(
-      "tokenProgram",
-      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-    )
-    resolvedAccounts.tokenProgram.isWritable = false
-  }
-  if (!resolvedAccounts.associatedTokenProgram.value) {
-    resolvedAccounts.associatedTokenProgram.value = context.programs.getPublicKey(
-      "associatedTokenProgram",
-      "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-    )
-    resolvedAccounts.associatedTokenProgram.isWritable = false
-  }
-  if (!resolvedAccounts.systemProgram.value) {
-    resolvedAccounts.systemProgram.value = context.programs.getPublicKey(
-      "systemProgram",
-      "11111111111111111111111111111111",
-    )
-    resolvedAccounts.systemProgram.isWritable = false
-  }
-
-  // Accounts in order.
-  const orderedAccounts: ResolvedAccount[] = Object.values(resolvedAccounts).sort(
-    (a, b) => a.index - b.index,
-  )
-
-  // Keys and Signers.
-  const [keys, signers] = getAccountMetasAndSigners(orderedAccounts, "programId", programId)
-
-  // Data.
-  const data = getFaucetInstructionDataSerializer().serialize(
-    resolvedArgs as FaucetInstructionDataArgs,
-  )
-
-  // Bytes Created On Chain.
-  const bytesCreatedOnChain = 0
-
-  return transactionBuilder([
-    { bytesCreatedOnChain, instruction: { data, keys, programId }, signers },
-  ])
-}
+export type FaucetInstructionDataArgs = { amount: number | bigint };
 
 export function getFaucetInstructionDataSerializer(): Serializer<
   FaucetInstructionDataArgs,
@@ -180,14 +56,152 @@ export function getFaucetInstructionDataSerializer(): Serializer<
   return mapSerializer<FaucetInstructionDataArgs, any, FaucetInstructionData>(
     struct<FaucetInstructionData>(
       [
-        ["discriminator", bytes({ size: 8 })],
-        ["amount", u64()],
+        ['discriminator', bytes({ size: 8 })],
+        ['amount', u64()],
       ],
-      { description: "FaucetInstructionData" },
+      { description: 'FaucetInstructionData' }
     ),
     (value) => ({
       ...value,
       discriminator: new Uint8Array([0, 98, 59, 30, 144, 142, 113, 12]),
-    }),
-  ) as Serializer<FaucetInstructionDataArgs, FaucetInstructionData>
+    })
+  ) as Serializer<FaucetInstructionDataArgs, FaucetInstructionData>;
+}
+
+// Args.
+export type FaucetInstructionArgs = FaucetInstructionDataArgs;
+
+// Instruction.
+export function faucet(
+  context: Pick<Context, 'eddsa' | 'programs'>,
+  input: FaucetInstructionAccounts & FaucetInstructionArgs
+): TransactionBuilder {
+  // Program ID.
+  const programId = context.programs.getPublicKey(
+    'zodialV2',
+    '5E1ikr753b8RQZdtohZAY8wmpjn2hu9dWzrN5xEasmtu'
+  );
+
+  // Accounts.
+  const resolvedAccounts = {
+    user: { index: 0, isWritable: true as boolean, value: input.user ?? null },
+    faucetMint: {
+      index: 1,
+      isWritable: false as boolean,
+      value: input.faucetMint ?? null,
+    },
+    mintAuthority: {
+      index: 2,
+      isWritable: false as boolean,
+      value: input.mintAuthority ?? null,
+    },
+    mint: { index: 3, isWritable: true as boolean, value: input.mint ?? null },
+    userTokenAccount: {
+      index: 4,
+      isWritable: true as boolean,
+      value: input.userTokenAccount ?? null,
+    },
+    tokenProgram: {
+      index: 5,
+      isWritable: false as boolean,
+      value: input.tokenProgram ?? null,
+    },
+    associatedTokenProgram: {
+      index: 6,
+      isWritable: false as boolean,
+      value: input.associatedTokenProgram ?? null,
+    },
+    systemProgram: {
+      index: 7,
+      isWritable: false as boolean,
+      value: input.systemProgram ?? null,
+    },
+  } satisfies ResolvedAccountsWithIndices;
+
+  // Arguments.
+  const resolvedArgs: FaucetInstructionArgs = { ...input };
+
+  // Default values.
+  if (!resolvedAccounts.mintAuthority.value) {
+    resolvedAccounts.mintAuthority.value = context.eddsa.findPda(programId, [
+      bytes().serialize(
+        new Uint8Array([
+          102, 97, 117, 99, 101, 116, 45, 109, 105, 110, 116, 45, 97, 117, 116,
+          104,
+        ])
+      ),
+      publicKeySerializer().serialize(
+        expectPublicKey(resolvedAccounts.faucetMint.value)
+      ),
+    ]);
+  }
+  if (!resolvedAccounts.userTokenAccount.value) {
+    resolvedAccounts.userTokenAccount.value = context.eddsa.findPda(
+      context.programs.getPublicKey(
+        'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
+        'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'
+      ),
+      [
+        publicKeySerializer().serialize(
+          expectPublicKey(resolvedAccounts.user.value)
+        ),
+        bytes().serialize(
+          new Uint8Array([
+            6, 221, 246, 225, 215, 101, 161, 147, 217, 203, 225, 70, 206, 235,
+            121, 172, 28, 180, 133, 237, 95, 91, 55, 145, 58, 140, 245, 133,
+            126, 255, 0, 169,
+          ])
+        ),
+        publicKeySerializer().serialize(
+          expectPublicKey(resolvedAccounts.mint.value)
+        ),
+      ]
+    );
+  }
+  if (!resolvedAccounts.tokenProgram.value) {
+    resolvedAccounts.tokenProgram.value = context.programs.getPublicKey(
+      'tokenProgram',
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'
+    );
+    resolvedAccounts.tokenProgram.isWritable = false;
+  }
+  if (!resolvedAccounts.associatedTokenProgram.value) {
+    resolvedAccounts.associatedTokenProgram.value =
+      context.programs.getPublicKey(
+        'associatedTokenProgram',
+        'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'
+      );
+    resolvedAccounts.associatedTokenProgram.isWritable = false;
+  }
+  if (!resolvedAccounts.systemProgram.value) {
+    resolvedAccounts.systemProgram.value = context.programs.getPublicKey(
+      'systemProgram',
+      '11111111111111111111111111111111'
+    );
+    resolvedAccounts.systemProgram.isWritable = false;
+  }
+
+  // Accounts in order.
+  const orderedAccounts: ResolvedAccount[] = Object.values(
+    resolvedAccounts
+  ).sort((a, b) => a.index - b.index);
+
+  // Keys and Signers.
+  const [keys, signers] = getAccountMetasAndSigners(
+    orderedAccounts,
+    'programId',
+    programId
+  );
+
+  // Data.
+  const data = getFaucetInstructionDataSerializer().serialize(
+    resolvedArgs as FaucetInstructionDataArgs
+  );
+
+  // Bytes Created On Chain.
+  const bytesCreatedOnChain = 0;
+
+  return transactionBuilder([
+    { instruction: { keys, programId, data }, signers, bytesCreatedOnChain },
+  ]);
 }

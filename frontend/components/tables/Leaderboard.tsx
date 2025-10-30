@@ -1,16 +1,31 @@
+"use client"
+
+import { useState } from "react"
 import Link from "next/link"
 
 import { useObligationLeaderboard } from "@/hooks/umi/useObligationLeaderboard"
 import { cn, formatCurrency } from "@/lib/utils"
 
+import { Button } from "../ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import DataTable, { Column } from "./DataTable"
 
-export default function Leaderboard() {
-  const leaderboard = useObligationLeaderboard()
+const PAGE_SIZE = 100
 
+export default function Leaderboard() {
+  const [page, setPage] = useState(1)
+  const leaderboard = useObligationLeaderboard({ page, pageSize: PAGE_SIZE })
+
+  const totalEntries = leaderboard.data?.totalEntries ?? 0
+  const totalPages = leaderboard.data?.totalPages ?? 0
+
+  // Update column accessor for rank to show global rank
   const cols: Column<{ account: string; portfolio_value: string }>[] = [
-    { accessor: (_r, i) => i + 1, className: "w-12", header: "#" },
+    {
+      accessor: (_r, i) => (page - 1) * PAGE_SIZE + i + 1,
+      className: "w-12",
+      header: "#",
+    },
     {
       accessor: (r) => {
         const displayAccount =
@@ -35,6 +50,17 @@ export default function Leaderboard() {
     },
   ]
 
+  const handlePrevPage = () => {
+    setPage((prev) => Math.max(1, prev - 1))
+  }
+
+  const handleNextPage = () => {
+    setPage((prev) => Math.min(totalPages, prev + 1))
+  }
+
+  const startEntry = (page - 1) * PAGE_SIZE + 1
+  const endEntry = Math.min(page * PAGE_SIZE, totalEntries)
+
   return (
     <Card className="border-foreground bg-card rounded-xs border-2 shadow lg:col-span-2">
       <CardHeader className="flex items-center justify-between pb-3">
@@ -44,7 +70,39 @@ export default function Leaderboard() {
         {leaderboard.isLoading ? (
           <div className="py-4 text-center">Loading…</div>
         ) : leaderboard.data?.leaderboard?.length ? (
-          <DataTable columns={cols} data={leaderboard.data.leaderboard} keyFn={(r) => r.account} />
+          <>
+            <DataTable columns={cols} data={leaderboard.data.leaderboard} keyFn={(r) => r.account} />
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="mt-4 flex items-center justify-between border-t pt-4">
+                <div className="text-muted-foreground text-sm">
+                  Showing {startEntry}-{endEntry} of {totalEntries} entries
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePrevPage}
+                    disabled={page === 1 || leaderboard.isLoading}
+                  >
+                    Previous
+                  </Button>
+                  <div className="text-sm">
+                    Page {page} of {totalPages}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNextPage}
+                    disabled={page === totalPages || leaderboard.isLoading}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-muted-foreground py-4 text-center">No data yet.</div>
         )}

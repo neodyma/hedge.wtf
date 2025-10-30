@@ -1,29 +1,112 @@
 import type { Asset } from "@/types/asset"
 import type { Position } from "@/types/portfolio"
+import type { AssetRegistry } from "@/clients/generated/accounts/assetRegistry"
+import type { RiskRegistry } from "@/clients/generated/accounts/riskRegistry"
 
 import combinedAssetData from "@/data/combined_asset_data.json"
+import { getMintByCmcId } from "@/lib/riskParameterQuery"
+import { getRiskPairForTokens, bpsToDecimal } from "@/lib/umi/risk-utils"
 
 const DEFAULT_LT = 0.9
 
 const assetByCmcId: Map<number, { threshold_matrix?: Record<string, number> }> = (() => {
-  const entries = Object.values(combinedAssetData as Record<string, unknown>)
+  // Filter out _market entry and extract only asset objects with cmc_id
+  const entries = Object.entries(combinedAssetData as Record<string, unknown>)
+    .filter(([key]) => key !== "_market") // Skip market metadata
+    .map(([, value]) => value)
     .filter(
       (entry): entry is { cmc_id?: number; threshold_matrix?: Record<string, number> } =>
         typeof entry === "object" && entry !== null && "cmc_id" in entry,
     )
     .map((entry) => entry as { cmc_id?: number; threshold_matrix?: Record<string, number> })
     .filter((entry) => typeof entry.cmc_id === "number")
-  return new Map(entries.map((entry) => [entry.cmc_id as number, entry]))
+
+  const map = new Map(entries.map((entry) => [entry.cmc_id as number, entry]))
+
+  // Debug: Log map contents
+  console.log("[assetByCmcId] Map size:", map.size)
+  console.log("[assetByCmcId] Sample entries:", Array.from(map.entries()).slice(0, 3))
+
+  return map
 })()
 
-export function getPairLt(a0: Asset, a1: Asset): number {
-  const lt = lookupThreshold(a0.cmc_id, a1.cmc_id)
-  return lt ?? DEFAULT_LT
+export function getPairLtByCmcIds(depositCmcId: number, borrowCmcId: number): number {
+  // Look up the deposit asset's threshold_matrix
+  const depositAsset = assetByCmcId.get(depositCmcId)
+
+  console.log(`[getPairLtByCmcIds] Lookup: deposit=${depositCmcId}, borrow=${borrowCmcId}`)
+  console.log(`[getPairLtByCmcIds] Found asset:`, depositAsset)
+
+  if (!depositAsset?.threshold_matrix) {
+    console.log(`[getPairLtByCmcIds] No threshold_matrix, returning default ${DEFAULT_LT}`)
+    return DEFAULT_LT
+  }
+
+  // Get the threshold for this borrow asset
+  const threshold = depositAsset.threshold_matrix[String(borrowCmcId)]
+
+  console.log(`[getPairLtByCmcIds] threshold_matrix[${borrowCmcId}] =`, threshold)
+
+  if (threshold == null) {
+    console.log(`[getPairLtByCmcIds] Threshold not found, returning default ${DEFAULT_LT}`)
+    return DEFAULT_LT
+  }
+
+  // Thresholds in the matrix are percentages (85, 93, etc.)
+  // Convert to decimal (0.85, 0.93, etc.)
+  const result = threshold / 100
+  console.log(`[getPairLtByCmcIds] Returning threshold: ${threshold} → ${result}`)
+  return result
 }
 
-export function getPairLtRaw(a0: number, a1: number): number {
-  const lt = lookupThreshold(a0, a1)
-  return lt ?? DEFAULT_LT
+/**
+ * Get liquidation threshold from on-chain RiskRegistry
+ * Falls back to JSON-based lookup if RiskRegistry data is unavailable
+ *
+ * @param depositCmcId - CMC ID of deposit asset
+ * @param borrowCmcId - CMC ID of borrow asset
+ * @param assetRegistry - AssetRegistry for mint → index mapping
+ * @param riskRegistry - RiskRegistry with on-chain risk pairs
+ * @returns Liquidation threshold as decimal (e.g., 0.93 for 93%)
+ */
+export function getPairLtFromRegistry(
+  depositCmcId: number,
+  borrowCmcId: number,
+  assetRegistry: AssetRegistry | null,
+  riskRegistry: RiskRegistry | null,
+): number {
+  console.log(
+    `[getPairLtFromRegistry] Called with deposit=${depositCmcId}, borrow=${borrowCmcId}, hasRegistry=${Boolean(assetRegistry && riskRegistry)}`,
+  )
+
+  // Try on-chain lookup first
+  if (assetRegistry && riskRegistry) {
+    // Map CMC IDs to mint addresses
+    const depositMint = getMintByCmcId(depositCmcId)
+    const borrowMint = getMintByCmcId(borrowCmcId)
+
+    console.log(`[getPairLtFromRegistry] Mints: deposit=${depositMint}, borrow=${borrowMint}`)
+
+    if (depositMint && borrowMint) {
+      // Get risk pair from on-chain registry
+      const riskPair = getRiskPairForTokens(depositMint, borrowMint, assetRegistry, riskRegistry)
+
+      console.log(`[getPairLtFromRegistry] On-chain riskPair:`, riskPair)
+
+      if (riskPair) {
+        // Convert basis points to decimal (9300 bps → 0.93)
+        const result = bpsToDecimal(riskPair.liqThresholdBps)
+        console.log(
+          `[getPairLtFromRegistry] Using on-chain: ${riskPair.liqThresholdBps} bps → ${result}`,
+        )
+        return result
+      }
+    }
+  }
+
+  // Fallback to JSON-based lookup
+  console.log(`[getPairLtFromRegistry] Falling back to JSON lookup`)
+  return getPairLtByCmcIds(depositCmcId, borrowCmcId)
 }
 
 export function valueOfPositions(positions: Position[], type: "0d" | "1d" | "7d" | "30d"): number {
@@ -39,14 +122,6 @@ export function valueOfPositions(positions: Position[], type: "0d" | "1d" | "7d"
     case "30d":
       return positions.reduce((acc, pos) => acc + pos.amount * (pos.asset.price.month ?? 0), 0)
   }
-}
-
-function lookupThreshold(primaryId: number, counterId: number): null | number {
-  const primary = assetByCmcId.get(primaryId)
-  if (!primary?.threshold_matrix) return null
-  const raw = primary.threshold_matrix[String(counterId)]
-  if (raw == null) return null
-  return raw > 1 ? raw / 100 : raw
 }
 
 const borrowsUsdTotal = (borrows: Position[]): number =>
@@ -186,4 +261,10 @@ export function getProjectedApy(
 
     return sum + valueUsd * apy
   }, 0)
+}
+
+export function getDistribution(positions: Position[]): number[] {
+  const totalValue = valueOfPositions(positions, "0d")
+  if (totalValue === 0) return positions.map(() => 0)
+  return positions.map((pos) => (pos.amount * pos.asset.price.latest) / totalValue)
 }
