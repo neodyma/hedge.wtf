@@ -1,9 +1,3 @@
-/**
- * React hook for fetching RPC-based leaderboard data
- * Uses TanStack Query for client-side caching and automatic refetching
- * Server-side caching is handled by the API route (shared across all users)
- */
-
 import { useQuery } from "@tanstack/react-query"
 
 export interface LeaderboardEntry {
@@ -18,10 +12,10 @@ export interface LeaderboardResponse {
   cached: boolean
   leaderboard: LeaderboardEntry[]
   obligationCount: number
-  scannedAt: number
-  totalEntries: number
   page: number
   pageSize: number
+  scannedAt: number
+  totalEntries: number
   totalPages: number
 }
 
@@ -44,26 +38,20 @@ export function useObligationLeaderboard(options?: {
     enabled,
     queryFn: () => fetchLeaderboard(false, page, pageSize),
     queryKey: ["leaderboard-rpc", page, pageSize],
-    refetchInterval, // Auto-refresh every 30 seconds
-    retry: 2, // Retry failed requests twice
-    staleTime: 30_000, // Consider data stale after 30 seconds
+    refetchInterval,
+    retry: 2,
+    staleTime: 30_000,
   })
 }
 
-/**
- * Hook for manually refreshing the leaderboard (force full scan)
- */
 export function useRefreshLeaderboard() {
   return useQuery({
-    enabled: false, // Only run when manually triggered
+    enabled: false,
     queryFn: () => fetchLeaderboard(true),
     queryKey: ["leaderboard-rpc-refresh"],
   })
 }
 
-/**
- * Fetch leaderboard data from RPC API with pagination
- */
 async function fetchLeaderboard(
   forceRefresh = false,
   page = 1,

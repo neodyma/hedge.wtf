@@ -1,151 +1,71 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client"
 
 import {
-  ReactFlow,
-  Node,
-  Edge,
   Background,
   Controls,
-  MiniMap,
-  useNodesState,
-  useEdgesState,
+  Edge,
+  EdgeLabelRenderer,
   Position as FlowPosition,
   getBezierPath,
-  EdgeLabelRenderer,
+  MiniMap,
+  Node,
+  ReactFlow,
+  useEdgesState,
+  useNodesState,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
-import { useCallback, useMemo, useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { cn, formatCurrency, formatNumberWithSuffix } from "@/lib/utils"
-import { getPairLtFromRegistry } from "@/lib/portfolio"
-import { getAssetByMint } from "@/lib/riskParameterQuery"
-import { Position } from "@/types/portfolio"
 import type { AssetRegistry } from "@/clients/generated/accounts/assetRegistry"
 import type { RiskRegistry } from "@/clients/generated/accounts/riskRegistry"
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { getPairLtFromRegistry } from "@/lib/portfolio"
+import { getAssetByMint } from "@/lib/riskParameterQuery"
+import { cn, formatCurrency, formatNumberWithSuffix } from "@/lib/utils"
+import { Position } from "@/types/portfolio"
+
 interface CustomEdgeProps {
+  data?: { isHighlighted: boolean; threshold: number }
   id: string
+  sourcePosition: FlowPosition
   sourceX: number
   sourceY: number
+  style?: React.CSSProperties
+  targetPosition: FlowPosition
   targetX: number
   targetY: number
-  sourcePosition: FlowPosition
-  targetPosition: FlowPosition
-  style?: React.CSSProperties
-  data?: { threshold: number; isHighlighted: boolean }
-}
-
-function CustomEdge({
-  id,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  style = {},
-  data,
-}: CustomEdgeProps) {
-  const [edgePath, labelX, labelY] = getBezierPath({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-    curvature: data?.isHighlighted ? 0.4 : 0.25,
-  })
-
-  return (
-    <>
-      <path
-        id={id}
-        style={{
-          ...style,
-          zIndex: data?.isHighlighted ? 1000 : 1,
-        }}
-        className="react-flow__edge-path"
-        d={edgePath}
-      />
-      <EdgeLabelRenderer>
-        {data?.isHighlighted && (
-          <div
-            style={{
-              position: "absolute",
-              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-              fontSize: 12,
-              pointerEvents: "all",
-            }}
-            className={cn(
-              "rounded-md border px-2 py-1 text-xs font-medium transition-all duration-200",
-              data?.isHighlighted
-                ? "border-primary bg-primary text-foreground shadow-lg"
-                : "border-border bg-card text-muted-foreground",
-            )}
-          >
-            {((data?.threshold ?? 0.9) * 100).toFixed(0)}%
-          </div>
-        )}
-      </EdgeLabelRenderer>
-    </>
-  )
-}
-
-interface PositionBoxProps {
-  position: Position
-  share: number
-  type: "deposit" | "borrow"
-  isHovered: boolean
-}
-
-function PositionBox({ position, share, type, isHovered }: PositionBoxProps) {
-  const value = position.amount * position.asset.price.latest
-
-  return (
-    <div
-      className={cn(
-        "flex h-full w-full items-center justify-between rounded-lg border-2 p-4 transition-all duration-200",
-        "bg-card backdrop-blur-sm",
-        isHovered ? "border-primary shadow-primary/25 shadow-lg" : "border-muted-foreground",
-        type === "deposit" ? "border-l-success border-l-4" : "border-l-warning border-l-4",
-      )}
-    >
-      <div className="flex flex-col items-start">
-        <div className="text-foreground text-sm font-medium">{position.asset.symbol}</div>
-        <div className="text-muted-foreground text-sm font-semibold">
-          {formatNumberWithSuffix(position.amount)}
-        </div>
-      </div>
-      <div className="flex flex-col items-end">
-        <div className="text-foreground text-sm">${formatNumberWithSuffix(value)}</div>
-        <div className="text-primary text-sm font-semibold">{formatNumberWithSuffix(share)}%</div>
-      </div>
-    </div>
-  )
 }
 
 interface HealthScoreCardProps {
-  wrapped: {
-    deposits: Position[]
-    borrows: Position[]
-  }
-  depositWorth: number
-  borrowWorth: number
   assetRegistry: AssetRegistry | null
-  riskRegistry: RiskRegistry | null
+  borrowWorth: number
+  depositWorth: number
+  riskRegistry: null | RiskRegistry
+  wrapped: {
+    borrows: Position[]
+    deposits: Position[]
+  }
+}
+
+interface PositionBoxProps {
+  isHovered: boolean
+  position: Position
+  share: number
+  type: "borrow" | "deposit"
 }
 
 export default function HealthScoreCard({
-  wrapped,
-  depositWorth,
-  borrowWorth,
   assetRegistry,
+  borrowWorth,
+  depositWorth,
   riskRegistry,
+  wrapped,
 }: HealthScoreCardProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
-  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
+  const [hoveredNodeId, setHoveredNodeId] = useState<null | string>(null)
   const [windowWidth, setWindowWidth] = useState<number>(
     typeof window !== "undefined" ? window.innerWidth : 800,
   )
@@ -188,26 +108,26 @@ export default function HealthScoreCard({
       const mintAddress = deposit.asset.zodial?.mint ?? `deposit-${index}`
 
       return {
-        id: `deposit-${mintAddress}`,
-        type: "default",
-        position: { x: leftSideCenter - boxWidth / 2, y: yPosition },
         data: {
           label: (
             <PositionBox
+              isHovered={hoveredNodeId === `deposit-${mintAddress}`}
               position={deposit}
               share={share}
               type="deposit"
-              isHovered={hoveredNodeId === `deposit-${mintAddress}`}
             />
           ),
         },
+        id: `deposit-${mintAddress}`,
+        position: { x: leftSideCenter - boxWidth / 2, y: yPosition },
+        sourcePosition: FlowPosition.Right,
         style: {
           background: "transparent",
           border: "none",
-          width: boxWidth,
           height: boxHeight,
+          width: boxWidth,
         },
-        sourcePosition: FlowPosition.Right,
+        type: "default",
       }
     })
 
@@ -221,26 +141,26 @@ export default function HealthScoreCard({
       const mintAddress = borrow.asset.zodial?.mint ?? `borrow-${index}`
 
       return {
-        id: `borrow-${mintAddress}`,
-        type: "default",
-        position: { x: rightSideCenter - boxWidth / 2, y: yPosition },
         data: {
           label: (
             <PositionBox
+              isHovered={hoveredNodeId === `borrow-${mintAddress}`}
               position={borrow}
               share={share}
               type="borrow"
-              isHovered={hoveredNodeId === `borrow-${mintAddress}`}
             />
           ),
         },
+        id: `borrow-${mintAddress}`,
+        position: { x: rightSideCenter - boxWidth / 2, y: yPosition },
         style: {
           background: "transparent",
           border: "none",
-          width: boxWidth,
           height: boxHeight,
+          width: boxWidth,
         },
         targetPosition: FlowPosition.Left,
+        type: "default",
       }
     })
 
@@ -263,24 +183,25 @@ export default function HealthScoreCard({
 
         // Use on-chain RiskRegistry for pair-specific liquidation thresholds
         // Falls back to JSON-based lookup if RiskRegistry is unavailable
-        const threshold = depositCmcId && borrowCmcId
-          ? getPairLtFromRegistry(depositCmcId, borrowCmcId, assetRegistry, riskRegistry)
-          : 0.9
+        const threshold =
+          depositCmcId && borrowCmcId
+            ? getPairLtFromRegistry(depositCmcId, borrowCmcId, assetRegistry, riskRegistry)
+            : 0.9
 
         flowEdges.push({
+          animated: isHighlighted,
+          data: {
+            isHighlighted,
+            threshold,
+          },
           id: `edge-${depositMint}-${borrowMint}`,
           source: `deposit-${depositMint}`,
-          target: `borrow-${borrowMint}`,
-          type: "custom",
-          animated: isHighlighted,
           style: {
             stroke: isHighlighted ? "#8b5cf6" : "#374151",
             strokeWidth: isHighlighted ? 3 : 1,
           },
-          data: {
-            threshold,
-            isHighlighted,
-          },
+          target: `borrow-${borrowMint}`,
+          type: "custom",
         })
       })
     })
@@ -288,7 +209,17 @@ export default function HealthScoreCard({
     setContainerHeight(containerHeight)
     setNodes([...depositNodes, ...borrowNodes])
     setEdges(flowEdges)
-  }, [allDeposits, allBorrows, depositWorth, borrowWorth, hoveredNodeId, setEdges, setNodes])
+  }, [
+    allDeposits,
+    allBorrows,
+    depositWorth,
+    borrowWorth,
+    hoveredNodeId,
+    setEdges,
+    setNodes,
+    assetRegistry,
+    riskRegistry,
+  ])
 
   const onNodeMouseEnter = useCallback((_: React.MouseEvent, node: Node) => {
     setHoveredNodeId(node.id)
@@ -334,23 +265,23 @@ export default function HealthScoreCard({
         </div>
         <div className="w-full" style={{ height: `${containerHeight}px` }}>
           <ReactFlow
-            nodes={nodes}
+            className="bg-transparent"
             edges={edges}
             edgeTypes={edgeTypes}
-            onNodesChange={onNodesChange}
+            elementsSelectable={false}
+            fitView
+            nodes={nodes}
+            nodesConnectable={false}
+            nodesDraggable={false}
             onEdgesChange={onEdgesChange}
             onNodeMouseEnter={onNodeMouseEnter}
             onNodeMouseLeave={onNodeMouseLeave}
-            nodesDraggable={false}
-            nodesConnectable={false}
-            elementsSelectable={false}
+            onNodesChange={onNodesChange}
             panOnDrag={false}
-            zoomOnScroll={false}
-            zoomOnPinch={false}
-            zoomOnDoubleClick={false}
             preventScrolling={false}
-            fitView
-            className="bg-transparent"
+            zoomOnDoubleClick={false}
+            zoomOnPinch={false}
+            zoomOnScroll={false}
           >
             <Background style={{ display: "none" }} />
             <Controls style={{ display: "none" }} />
@@ -365,5 +296,87 @@ export default function HealthScoreCard({
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+function CustomEdge({
+  data,
+  id,
+  sourcePosition,
+  sourceX,
+  sourceY,
+  style = {},
+  targetPosition,
+  targetX,
+  targetY,
+}: CustomEdgeProps) {
+  const [edgePath, labelX, labelY] = getBezierPath({
+    curvature: data?.isHighlighted ? 0.4 : 0.25,
+    sourcePosition,
+    sourceX,
+    sourceY,
+    targetPosition,
+    targetX,
+    targetY,
+  })
+
+  return (
+    <>
+      <path
+        className="react-flow__edge-path"
+        d={edgePath}
+        id={id}
+        style={{
+          ...style,
+          zIndex: data?.isHighlighted ? 1000 : 1,
+        }}
+      />
+      <EdgeLabelRenderer>
+        {data?.isHighlighted && (
+          <div
+            className={cn(
+              "rounded-md border px-2 py-1 text-xs font-medium transition-all duration-200",
+              data?.isHighlighted
+                ? "border-primary bg-primary text-foreground shadow-lg"
+                : "border-border bg-card text-muted-foreground",
+            )}
+            style={{
+              fontSize: 12,
+              pointerEvents: "all",
+              position: "absolute",
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+            }}
+          >
+            {((data?.threshold ?? 0.9) * 100).toFixed(0)}%
+          </div>
+        )}
+      </EdgeLabelRenderer>
+    </>
+  )
+}
+
+function PositionBox({ isHovered, position, share, type }: PositionBoxProps) {
+  const value = position.amount * position.asset.price.latest
+
+  return (
+    <div
+      className={cn(
+        "flex h-full w-full items-center justify-between rounded-lg border-2 p-4 transition-all duration-200",
+        "bg-card backdrop-blur-sm",
+        isHovered ? "border-primary shadow-primary/25 shadow-lg" : "border-muted-foreground",
+        type === "deposit" ? "border-l-success border-l-4" : "border-l-warning border-l-4",
+      )}
+    >
+      <div className="flex flex-col items-start">
+        <div className="text-foreground text-sm font-medium">{position.asset.symbol}</div>
+        <div className="text-muted-foreground text-sm font-semibold">
+          {formatNumberWithSuffix(position.amount)}
+        </div>
+      </div>
+      <div className="flex flex-col items-end">
+        <div className="text-foreground text-sm">${formatNumberWithSuffix(value)}</div>
+        <div className="text-primary text-sm font-semibold">{formatNumberWithSuffix(share)}%</div>
+      </div>
+    </div>
   )
 }
