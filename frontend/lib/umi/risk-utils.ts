@@ -3,6 +3,26 @@ import type { RiskRegistry } from "@/clients/generated/accounts/riskRegistry"
 import type { RiskPair } from "@/clients/generated/types/riskPair"
 
 /**
+ * Convert basis points to decimal
+ *
+ * @param bps - Basis points (e.g., 9300 = 93%)
+ * @returns Decimal value (e.g., 0.93)
+ */
+export function bpsToDecimal(bps: number): number {
+  return bps / 10000
+}
+
+/**
+ * Convert decimal to basis points
+ *
+ * @param decimal - Decimal value (e.g., 0.93)
+ * @returns Basis points (e.g., 9300)
+ */
+export function decimalToBps(decimal: number): number {
+  return Math.round(decimal * 10000)
+}
+
+/**
  * Get the risk pair for two tokens from the on-chain RiskRegistry
  *
  * @param depositMint - Mint address of the deposit asset
@@ -15,17 +35,13 @@ export function getRiskPairForTokens(
   depositMint: string,
   borrowMint: string,
   assetRegistry: AssetRegistry | null,
-  riskRegistry: RiskRegistry | null,
-): RiskPair | null {
+  riskRegistry: null | RiskRegistry,
+): null | RiskPair {
   if (!assetRegistry || !riskRegistry) return null
 
   // Find asset indices by mint address
-  const depositAsset = assetRegistry.assets.find(
-    (a) => a.mint.toString() === depositMint,
-  )
-  const borrowAsset = assetRegistry.assets.find(
-    (a) => a.mint.toString() === borrowMint,
-  )
+  const depositAsset = assetRegistry.assets.find((a) => a.mint.toString() === depositMint)
+  const borrowAsset = assetRegistry.assets.find((a) => a.mint.toString() === borrowMint)
 
   if (!depositAsset || !borrowAsset) return null
 
@@ -53,24 +69,4 @@ export function getRiskPairForTokens(
   }
 
   return riskRegistry.pairs[pairIndex]
-}
-
-/**
- * Convert basis points to decimal
- *
- * @param bps - Basis points (e.g., 9300 = 93%)
- * @returns Decimal value (e.g., 0.93)
- */
-export function bpsToDecimal(bps: number): number {
-  return bps / 10000
-}
-
-/**
- * Convert decimal to basis points
- *
- * @param decimal - Decimal value (e.g., 0.93)
- * @returns Basis points (e.g., 9300)
- */
-export function decimalToBps(decimal: number): number {
-  return Math.round(decimal * 10000)
 }

@@ -1,11 +1,11 @@
-import type { Asset } from "@/types/asset"
-import type { Position } from "@/types/portfolio"
 import type { AssetRegistry } from "@/clients/generated/accounts/assetRegistry"
 import type { RiskRegistry } from "@/clients/generated/accounts/riskRegistry"
+import type { Asset } from "@/types/asset"
+import type { Position } from "@/types/portfolio"
 
 import combinedAssetData from "@/data/combined_asset_data.json"
 import { getMintByCmcId } from "@/lib/riskParameterQuery"
-import { getRiskPairForTokens, bpsToDecimal } from "@/lib/umi/risk-utils"
+import { bpsToDecimal, getRiskPairForTokens } from "@/lib/umi/risk-utils"
 
 const DEFAULT_LT = 0.9
 
@@ -73,7 +73,7 @@ export function getPairLtFromRegistry(
   depositCmcId: number,
   borrowCmcId: number,
   assetRegistry: AssetRegistry | null,
-  riskRegistry: RiskRegistry | null,
+  riskRegistry: null | RiskRegistry,
 ): number {
   console.log(
     `[getPairLtFromRegistry] Called with deposit=${depositCmcId}, borrow=${borrowCmcId}, hasRegistry=${Boolean(assetRegistry && riskRegistry)}`,
@@ -156,7 +156,7 @@ export function getBorrowAmount(
       const borrowUsd = borrow.amount * (borrow.asset.price?.latest ?? 0)
       if (!Number.isFinite(borrowUsd)) continue
 
-      const lt = getPairLt(deposit.asset, borrow.asset)
+      const lt = getPairLtByCmcIds(deposit.asset.cmc_id, borrow.asset.cmc_id)
       A += depositUsd * borrowUsd * lt
     }
   }
@@ -166,7 +166,7 @@ export function getBorrowAmount(
     const depositUsd = deposit.amount * (deposit.asset.price?.latest ?? 0)
     if (!Number.isFinite(depositUsd)) continue
 
-    const lt = getPairLt(deposit.asset, asset)
+    const lt = getPairLtByCmcIds(deposit.asset.cmc_id, asset.cmc_id)
     C += depositUsd * lt
   }
 
@@ -225,6 +225,12 @@ export function getBorrowLimitWithLt(
   return limit
 }
 
+export function getDistribution(positions: Position[]): number[] {
+  const totalValue = valueOfPositions(positions, "0d")
+  if (totalValue === 0) return positions.map(() => 0)
+  return positions.map((pos) => (pos.amount * pos.asset.price.latest) / totalValue)
+}
+
 export function getHealthScoreWithLt(
   deposits: Position[],
   borrows: Position[],
@@ -261,10 +267,4 @@ export function getProjectedApy(
 
     return sum + valueUsd * apy
   }, 0)
-}
-
-export function getDistribution(positions: Position[]): number[] {
-  const totalValue = valueOfPositions(positions, "0d")
-  if (totalValue === 0) return positions.map(() => 0)
-  return positions.map((pos) => (pos.amount * pos.asset.price.latest) / totalValue)
 }
