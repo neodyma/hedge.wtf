@@ -393,7 +393,7 @@ export default function SwapDialog({
             </div>
           </div>
 
-          <div className="border-muted-foreground/30 bg-background/40 rounded-xs border-2 border-dashed p-3">
+          <div className="border-muted/60 bg-background/50 rounded-xs border-2 p-3">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">You will swap</span>
               <span className="font-medium">

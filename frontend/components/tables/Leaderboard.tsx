@@ -1,13 +1,13 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
+import { useState } from "react"
 
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useObligationLeaderboard } from "@/hooks/umi/useObligationLeaderboard"
 import { cn, formatCurrency } from "@/lib/utils"
 
-import { Button } from "../ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import DataTable, { Column } from "./DataTable"
 
 const PAGE_SIZE = 100
@@ -71,7 +71,11 @@ export default function Leaderboard() {
           <div className="py-4 text-center">Loading…</div>
         ) : leaderboard.data?.leaderboard?.length ? (
           <>
-            <DataTable columns={cols} data={leaderboard.data.leaderboard} keyFn={(r) => r.account} />
+            <DataTable
+              columns={cols}
+              data={leaderboard.data.leaderboard}
+              keyFn={(r) => r.account}
+            />
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
@@ -81,10 +85,10 @@ export default function Leaderboard() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handlePrevPage}
                     disabled={page === 1 || leaderboard.isLoading}
+                    onClick={handlePrevPage}
+                    size="sm"
+                    variant="outline"
                   >
                     Previous
                   </Button>
@@ -92,10 +96,10 @@ export default function Leaderboard() {
                     Page {page} of {totalPages}
                   </div>
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleNextPage}
                     disabled={page === totalPages || leaderboard.isLoading}
+                    onClick={handleNextPage}
+                    size="sm"
+                    variant="outline"
                   >
                     Next
                   </Button>

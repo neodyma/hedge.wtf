@@ -197,7 +197,7 @@ export default function HealthScoreCard({
           id: `edge-${depositMint}-${borrowMint}`,
           source: `deposit-${depositMint}`,
           style: {
-            stroke: isHighlighted ? "#8b5cf6" : "#374151",
+            stroke: isHighlighted ? "#3255c7" : "#374151",
             strokeWidth: isHighlighted ? 3 : 1,
           },
           target: `borrow-${borrowMint}`,
