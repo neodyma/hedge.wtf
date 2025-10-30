@@ -43,27 +43,27 @@ type Testimonial = {
 const featureHighlights: Feature[] = [
   {
     description:
-      "Live volatility feeds tune collateral factors in real-time to keep capital productive without compromising safety.",
+      "More accurate risk models allow for a safer position at higher utilization rates.",
     icon: ShieldCheck,
+    title: "Protecting your Portfolio",
+  },
+  {
+    description:
+      "Live volatility feeds tune collateral factors in real-time to keep capital productive without compromising safety.",
+    icon: Cpu,
     title: "Adaptive Risk Engine",
   },
   {
     description:
-      "Optimized Solana programs settle deposits and borrows in milliseconds with deterministic fees and predictable pricing.",
-    icon: Cpu,
-    title: "High-throughput Execution",
-  },
-  {
-    description:
-      "Smart liquidity routing aggregates pools to secure best-in-class rates for every position and order size.",
+      "Helping users diversify exposure across assets.",
     icon: Layers,
-    title: "Liquidity Routing",
+    title: "Allowing every usecase",
   },
   {
     description:
-      "Battle-tested dashboards, observability hooks, and SDKs keep core contributors and integrators in sync.",
+      "Discover new assets and take position on the latest market trends.",
     icon: Sparkles,
-    title: "Operator Tooling",
+    title: "One Market for Everyone",
   },
 ]
 
@@ -73,11 +73,7 @@ const heroCards: Metric[] = [
   { label: "Liquidation-free days", value: "182" },
 ]
 
-const heroMetrics: Metric[] = [
-  { label: "Protocol TVL", value: "$214M+" },
-  { label: "Avg. Deposit APY", value: "8.4%" },
-  { label: "Supported Assets", value: "47" },
-]
+
 
 const keyMetrics: Metric[] = [
   { label: "Risk-adjusted borrows", value: "$62.1M" },
@@ -104,11 +100,9 @@ const onboardingSteps: Step[] = [
 ]
 
 const partnerLogos: string[] = [
-  "Solana Foundation",
+  "Solana",
   "Pyth Network",
-  "UXD Labs",
   "Helius",
-  "Switchboard",
 ]
 
 const sectionVariants = {
@@ -153,11 +147,10 @@ export default function Home() {
         <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-24 px-4 py-16 sm:px-6 md:gap-28 lg:px-8 lg:py-24">
           <HeroSection />
           <PartnersSection />
-          <MetricsSection />
           <FeaturesSection />
-          <HowItWorksSection />
-          <CommunitySection />
-          <FinalCtaSection />
+          {/* <HowItWorksSection /> */}
+          {/* <CommunitySection />
+          <FinalCtaSection /> */}
         </div>
       </div>
     </main>
@@ -181,22 +174,21 @@ const HeroSection = () => (
         className="text-primary/80 font-mono text-xs font-bold tracking-[0.32em] uppercase"
         variants={sectionVariants}
       >
-        Institutional-grade Solana lending
+        Unified Portfolio Hedging
       </motion.span>
-
       <motion.h1
         className="text-foreground mt-4 text-4xl leading-tight font-[500] tracking-tight sm:text-5xl lg:text-6xl"
         variants={sectionVariants}
       >
-        Harness programmable liquidity with bulletproof risk controls.
+        One Market.
+        Infinite UseCases.
       </motion.h1>
 
       <motion.p
         className="text-muted-foreground mt-6 max-w-xl text-base sm:text-lg"
         variants={sectionVariants}
       >
-        Hedge.wtf unlocks capital efficiency for sophisticated lenders and trading desks through
-        adaptive risk engines, actionable telemetry, and transparent composability.
+        Maximize your Portfolio and stay safe from liquidation on Solana.
       </motion.p>
 
       <motion.div
@@ -216,23 +208,6 @@ const HeroSection = () => (
         </Button>
       </motion.div>
 
-      <motion.div
-        animate="visible"
-        className="mt-10 grid w-full grid-cols-1 gap-4 sm:grid-cols-3"
-        initial="hidden"
-        variants={listStagger}
-      >
-        {heroMetrics.map((metric) => (
-          <motion.div
-            className="border-foreground/20 bg-card/80 rounded-xs border px-5 py-4 text-left shadow-sm backdrop-blur"
-            key={metric.label}
-            variants={sectionVariants}
-          >
-            <div className="text-muted-foreground text-xs uppercase">{metric.label}</div>
-            <div className="mt-2 font-mono text-2xl font-semibold">{metric.value}</div>
-          </motion.div>
-        ))}
-      </motion.div>
     </motion.div>
 
     <motion.div
@@ -263,10 +238,7 @@ const HeroSection = () => (
               </motion.div>
             ))}
           </div>
-          <div className="border-foreground/10 bg-background/40 text-muted-foreground mt-6 rounded-xs border p-4 text-sm leading-relaxed">
-            Automated triggers maintain target collateral ratios and broadcast warnings to connected
-            desks ahead of volatility spikes.
-          </div>
+
         </CardContent>
       </Card>
       <motion.div
@@ -292,7 +264,7 @@ const PartnersSection = () => (
     <Card className="border-foreground/20 bg-card/70 rounded-xs border backdrop-blur-sm">
       <CardContent className="flex flex-col gap-6 py-6">
         <div className="text-muted-foreground text-xs tracking-[0.3em] uppercase">
-          Trusted by teams across Solana
+          Empowered through
         </div>
         <div className="mask-scroll-x flex flex-wrap items-center gap-4 text-sm sm:flex-nowrap sm:overflow-x-auto">
           {partnerLogos.map((partner) => (
@@ -309,42 +281,6 @@ const PartnersSection = () => (
   </motion.section>
 )
 
-const MetricsSection = () => (
-  <motion.section
-    animate="visible"
-    className="flex flex-col gap-10"
-    initial="hidden"
-    transition={{ duration: 0.5, ease: "easeOut" }}
-    variants={sectionVariants}
-    viewport={{ amount: 0.2, once: true }}
-    whileInView="visible"
-  >
-    <SectionHeading
-      description="Transparent dashboards and independent attestations keep counterparties aligned and audit-ready."
-      eyebrow="Protocol telemetry"
-      title="Capital that compounds with confidence."
-    />
-    <motion.div
-      animate="visible"
-      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-      initial="hidden"
-      variants={listStagger}
-      viewport={{ amount: 0.2, once: true }}
-      whileInView="visible"
-    >
-      {keyMetrics.map((metric) => (
-        <motion.div
-          className="border-foreground/20 bg-card/80 rounded-xs border p-6 shadow-sm backdrop-blur"
-          key={metric.label}
-          variants={sectionVariants}
-        >
-          <div className="text-muted-foreground text-sm">{metric.label}</div>
-          <div className="mt-3 font-mono text-3xl font-semibold">{metric.value}</div>
-        </motion.div>
-      ))}
-    </motion.div>
-  </motion.section>
-)
 
 const FeaturesSection = () => (
   <motion.section
@@ -357,9 +293,10 @@ const FeaturesSection = () => (
     whileInView="visible"
   >
     <SectionHeading
-      description="Every surface is engineered for transparency, velocity, and operational confidence."
+      description="."
       eyebrow="Why hedge.wtf"
-      title="Purpose-built for professional lenders."
+      title="Open-source.
+Stress-tested. Countless times."
     />
     <div className="grid gap-4 md:grid-cols-2">
       {featureHighlights.map((feature) => (
