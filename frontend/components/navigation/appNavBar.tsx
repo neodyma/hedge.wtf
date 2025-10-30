@@ -20,7 +20,7 @@ export function AppNavbar({ className, logo, rightSlot, viewport }: AppNavbarPro
   return (
     <header
       className={cn(
-        "border-muted-foreground bg-background sticky top-0 flex w-full border-spacing-4 items-center gap-3 border-b px-2 py-2 md:px-12",
+        "border-muted-foreground bg-background sticky top-0 z-20 flex w-full border-spacing-4 items-center gap-3 border-b px-2 py-2 md:px-12",
         className,
       )}
     >

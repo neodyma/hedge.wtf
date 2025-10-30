@@ -298,14 +298,14 @@ export default function SwapDialog({
               onValueChange={setFromSymbol}
               value={fromSymbol}
             >
-              <SelectTrigger className="bg-input w-full">
+              <SelectTrigger className="w-full">
                 <SelectValue
                   placeholder={availableList.length ? "Select source" : "No available assets"}
                 />
               </SelectTrigger>
-              <SelectContent className="bg-input">
+              <SelectContent>
                 {availableList.map(({ asset }) => (
-                  <SelectItem className="bg-input" key={asset.symbol} value={asset.symbol}>
+                  <SelectItem key={asset.symbol} value={asset.symbol}>
                     {asset.name}
                   </SelectItem>
                 ))}
@@ -321,7 +321,7 @@ export default function SwapDialog({
             <div>
               <div className="text-muted-foreground mb-1">{fromAsset?.symbol ?? "Amount"}</div>
               <Input
-                className="no-spinner border-border bg-input focus:border-border focus:ring-ring w-full rounded-md border px-3 py-2 text-right font-medium focus:ring-1"
+                className="no-spinner text-right font-medium"
                 disabled={!fromAsset}
                 inputMode="decimal"
                 onBlur={() => setFromTokenInput(fromTokenAmount ? fromTokenAmount.toString() : "")}
@@ -341,7 +341,7 @@ export default function SwapDialog({
             <div>
               <div className="text-muted-foreground mb-1">USD</div>
               <Input
-                className="no-spinner border-border bg-input focus:border-border focus:ring-ring w-full rounded-md border px-3 py-2 text-right font-medium focus:ring-1"
+                className="no-spinner text-right font-medium"
                 disabled={!fromAsset}
                 inputMode="decimal"
                 onBlur={() => setFromUsdInput(fromUsdAmount ? fromUsdAmount.toString() : "")}
@@ -363,11 +363,10 @@ export default function SwapDialog({
             <div className="text-muted-foreground text-xs">Use wallet balance</div>
             <div className="flex gap-2">
               <Button
-                className="bg-muted-foreground text-primary-foreground h-8 px-2"
                 disabled={!fromAsset}
                 onClick={() => setFromPercentage(1)}
                 size="sm"
-                variant="outline"
+                variant="secondary"
               >
                 Max
               </Button>
@@ -377,12 +376,12 @@ export default function SwapDialog({
           <div>
             <div className="text-muted-foreground mb-1">To</div>
             <Select disabled={!toAssetList.length} onValueChange={setToSymbol} value={toSymbol}>
-              <SelectTrigger className="bg-input w-full">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder={toAssetList.length ? "Select target" : "No assets"} />
               </SelectTrigger>
-              <SelectContent className="bg-input">
+              <SelectContent>
                 {toAssetList.map((asset) => (
-                  <SelectItem className="bg-input" key={asset.symbol} value={asset.symbol}>
+                  <SelectItem key={asset.symbol} value={asset.symbol}>
                     {asset.name}
                   </SelectItem>
                 ))}
@@ -394,7 +393,7 @@ export default function SwapDialog({
             </div>
           </div>
 
-          <div className="border-border bg-input rounded-md border p-3">
+          <div className="border-muted-foreground/30 bg-background/40 rounded-xs border-2 border-dashed p-3">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">You will swap</span>
               <span className="font-medium">
@@ -414,14 +413,10 @@ export default function SwapDialog({
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button className="hover:bg-muted" onClick={() => onOpenChange(false)} variant="ghost">
+            <Button onClick={() => onOpenChange(false)} variant="secondary">
               Cancel
             </Button>
-            <Button
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={!!disabledReason || submitting}
-              onClick={submit}
-            >
+            <Button disabled={!!disabledReason || submitting} onClick={submit}>
               {submitting ? "Swapping…" : "Swap"}
             </Button>
           </div>
