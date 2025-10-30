@@ -1,5 +1,3 @@
-"use client"
-
 import type { Umi, PublicKey as UmiPublicKey } from "@metaplex-foundation/umi"
 
 import {
@@ -7,6 +5,7 @@ import {
   getAssetRegistryGpaBuilder,
 } from "@/clients/generated/accounts/assetRegistry"
 import { getMarketGpaBuilder, type Market } from "@/clients/generated/accounts/market"
+import { getPriceCacheGpaBuilder, PriceCache } from "@/clients/generated/accounts/priceCache"
 
 export async function autoLoadMarketAndRegistry(umi: Umi): Promise<{
   market: Market | null
@@ -21,6 +20,14 @@ export async function autoLoadMarketAndRegistry(umi: Umi): Promise<{
 /** Load all Market accounts for this program. */
 export async function discoverMarkets(umi: Umi): Promise<Market[]> {
   return getMarketGpaBuilder(umi).getDeserialized()
+}
+
+export async function fetchPriceCacheForMarket(
+  umi: Umi,
+  marketPk: UmiPublicKey,
+): Promise<null | PriceCache> {
+  const caches = await getPriceCacheGpaBuilder(umi).whereField("market", marketPk).getDeserialized()
+  return caches[0] ?? null
 }
 
 /** Fetch the AssetRegistry for a given Market via GPA filter. */

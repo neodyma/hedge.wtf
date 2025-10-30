@@ -37,12 +37,15 @@ export type BorrowInstructionAccounts = {
   assetRegistry?: PublicKey | Pda;
   riskRegistry?: PublicKey | Pda;
   priceCache?: PublicKey | Pda;
-  pool: PublicKey | Pda;
+  /** The mint for this pool */
+  mint: PublicKey | Pda;
+  pool?: PublicKey | Pda;
   poolVault: PublicKey | Pda;
   vaultAuth?: PublicKey | Pda;
-  ownerTokenAta: PublicKey | Pda;
+  ownerTokenAta?: PublicKey | Pda;
   obligation?: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
+  associatedTokenProgram?: PublicKey | Pda;
   systemProgram?: PublicKey | Pda;
 };
 
@@ -119,34 +122,40 @@ export function borrow(
       isWritable: false as boolean,
       value: input.priceCache ?? null,
     },
-    pool: { index: 6, isWritable: true as boolean, value: input.pool ?? null },
+    mint: { index: 6, isWritable: false as boolean, value: input.mint ?? null },
+    pool: { index: 7, isWritable: true as boolean, value: input.pool ?? null },
     poolVault: {
-      index: 7,
+      index: 8,
       isWritable: true as boolean,
       value: input.poolVault ?? null,
     },
     vaultAuth: {
-      index: 8,
+      index: 9,
       isWritable: false as boolean,
       value: input.vaultAuth ?? null,
     },
     ownerTokenAta: {
-      index: 9,
+      index: 10,
       isWritable: true as boolean,
       value: input.ownerTokenAta ?? null,
     },
     obligation: {
-      index: 10,
+      index: 11,
       isWritable: true as boolean,
       value: input.obligation ?? null,
     },
     tokenProgram: {
-      index: 11,
+      index: 12,
       isWritable: false as boolean,
       value: input.tokenProgram ?? null,
     },
+    associatedTokenProgram: {
+      index: 13,
+      isWritable: false as boolean,
+      value: input.associatedTokenProgram ?? null,
+    },
     systemProgram: {
-      index: 12,
+      index: 14,
       isWritable: false as boolean,
       value: input.systemProgram ?? null,
     },
@@ -197,6 +206,17 @@ export function borrow(
       ),
     ]);
   }
+  if (!resolvedAccounts.pool.value) {
+    resolvedAccounts.pool.value = context.eddsa.findPda(programId, [
+      bytes().serialize(new Uint8Array([112, 111, 111, 108])),
+      publicKeySerializer().serialize(
+        expectPublicKey(resolvedAccounts.market.value)
+      ),
+      publicKeySerializer().serialize(
+        expectPublicKey(resolvedAccounts.mint.value)
+      ),
+    ]);
+  }
   if (!resolvedAccounts.vaultAuth.value) {
     resolvedAccounts.vaultAuth.value = context.eddsa.findPda(programId, [
       bytes().serialize(
@@ -206,6 +226,29 @@ export function borrow(
         expectPublicKey(resolvedAccounts.pool.value)
       ),
     ]);
+  }
+  if (!resolvedAccounts.ownerTokenAta.value) {
+    resolvedAccounts.ownerTokenAta.value = context.eddsa.findPda(
+      context.programs.getPublicKey(
+        'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
+        'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'
+      ),
+      [
+        publicKeySerializer().serialize(
+          expectPublicKey(resolvedAccounts.owner.value)
+        ),
+        bytes().serialize(
+          new Uint8Array([
+            6, 221, 246, 225, 215, 101, 161, 147, 217, 203, 225, 70, 206, 235,
+            121, 172, 28, 180, 133, 237, 95, 91, 55, 145, 58, 140, 245, 133,
+            126, 255, 0, 169,
+          ])
+        ),
+        publicKeySerializer().serialize(
+          expectPublicKey(resolvedAccounts.mint.value)
+        ),
+      ]
+    );
   }
   if (!resolvedAccounts.obligation.value) {
     resolvedAccounts.obligation.value = context.eddsa.findPda(programId, [
@@ -226,6 +269,14 @@ export function borrow(
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'
     );
     resolvedAccounts.tokenProgram.isWritable = false;
+  }
+  if (!resolvedAccounts.associatedTokenProgram.value) {
+    resolvedAccounts.associatedTokenProgram.value =
+      context.programs.getPublicKey(
+        'associatedTokenProgram',
+        'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'
+      );
+    resolvedAccounts.associatedTokenProgram.isWritable = false;
   }
   if (!resolvedAccounts.systemProgram.value) {
     resolvedAccounts.systemProgram.value = context.programs.getPublicKey(

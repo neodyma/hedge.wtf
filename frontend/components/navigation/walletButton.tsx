@@ -1,7 +1,15 @@
 "use client"
 
+import { useIsMobile } from "@/hooks/use-mobile"
+
 export default function WalletButton() {
-  return (
+  const mobile = useIsMobile()
+
+  return mobile ? (
+    <div>
+      <appkit-button balance="hide" label="" loadingLabel="" namespace="solana" size="sm" />
+    </div>
+  ) : (
     <div>
       <appkit-button
         balance="show"

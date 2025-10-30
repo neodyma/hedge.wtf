@@ -350,6 +350,7 @@ export default function TokenActionDialog({
           amount: rawAmount,
           authority: toPk(marketAuthority),
           market,
+          mint: pool.pool.mint,
           owner: umi.identity,
           ownerTokenAta: ownerAta,
           pool: pool.pool.publicKey,

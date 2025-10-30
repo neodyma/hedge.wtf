@@ -6,6 +6,7 @@ import type { AssetRegistry } from "@/clients/generated/accounts/assetRegistry"
 import type { Obligation } from "@/clients/generated/accounts/obligation"
 import type { Pool } from "@/clients/generated/accounts/pool"
 import type { PriceCache } from "@/clients/generated/accounts/priceCache"
+import type { RiskRegistry } from "@/clients/generated/accounts/riskRegistry"
 import type { Asset } from "@/types/asset"
 import type { ObligationAmounts, ObligationTokenPosition, Position } from "@/types/portfolio"
 
@@ -40,6 +41,7 @@ export interface UsePortfolioSnapshotResult {
   portfolioRefresh: () => Promise<unknown>
   priceCache: null | PriceCache
   registry: AssetRegistry | null
+  riskRegistry: RiskRegistry | null
   walletBalances: PortfolioWalletBalance[]
   walletBalancesQuery: ReturnType<typeof useWalletBalances>
   wrappedPositions: {
@@ -130,6 +132,7 @@ export function usePortfolioSnapshot(): UsePortfolioSnapshotResult {
     portfolioRefresh,
     priceCache: marketResources.priceCache,
     registry: marketResources.registry,
+    riskRegistry: marketResources.riskRegistry,
     walletBalances,
     walletBalancesQuery,
     wrappedPositions,
