@@ -1,0 +1,10 @@
+{
+  "idl": "../contract/target/idl/zodial_v2.json",
+  "before": [],
+  "scripts": {
+    "js": {
+      "from": "@codama/renderers-js-umi",
+      "args": ["clients/generated"]
+    }
+  }
+}
