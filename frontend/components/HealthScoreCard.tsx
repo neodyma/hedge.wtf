@@ -75,11 +75,6 @@ export default function HealthScoreCard({
   const allBorrows = wrapped.borrows
 
   useEffect(() => {
-    console.log("Deposits:", allDeposits)
-    console.log("Borrows:", allBorrows)
-  })
-
-  useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth)
     }

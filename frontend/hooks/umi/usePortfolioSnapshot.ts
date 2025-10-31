@@ -41,7 +41,7 @@ export interface UsePortfolioSnapshotResult {
   portfolioRefresh: () => Promise<unknown>
   priceCache: null | PriceCache
   registry: AssetRegistry | null
-  riskRegistry: RiskRegistry | null
+  riskRegistry: null | RiskRegistry
   walletBalances: PortfolioWalletBalance[]
   walletBalancesQuery: ReturnType<typeof useWalletBalances>
   wrappedPositions: {

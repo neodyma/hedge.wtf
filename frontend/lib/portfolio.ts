@@ -24,8 +24,8 @@ const assetByCmcId: Map<number, { threshold_matrix?: Record<string, number> }> =
   const map = new Map(entries.map((entry) => [entry.cmc_id as number, entry]))
 
   // Debug: Log map contents
-  console.log("[assetByCmcId] Map size:", map.size)
-  console.log("[assetByCmcId] Sample entries:", Array.from(map.entries()).slice(0, 3))
+  // console.log("[assetByCmcId] Map size:", map.size)
+  // console.log("[assetByCmcId] Sample entries:", Array.from(map.entries()).slice(0, 3))
 
   return map
 })()
@@ -34,28 +34,28 @@ export function getPairLtByCmcIds(depositCmcId: number, borrowCmcId: number): nu
   // Look up the deposit asset's threshold_matrix
   const depositAsset = assetByCmcId.get(depositCmcId)
 
-  console.log(`[getPairLtByCmcIds] Lookup: deposit=${depositCmcId}, borrow=${borrowCmcId}`)
-  console.log(`[getPairLtByCmcIds] Found asset:`, depositAsset)
+  // console.log(`[getPairLtByCmcIds] Lookup: deposit=${depositCmcId}, borrow=${borrowCmcId}`)
+  // console.log(`[getPairLtByCmcIds] Found asset:`, depositAsset)
 
   if (!depositAsset?.threshold_matrix) {
-    console.log(`[getPairLtByCmcIds] No threshold_matrix, returning default ${DEFAULT_LT}`)
+    // console.log(`[getPairLtByCmcIds] No threshold_matrix, returning default ${DEFAULT_LT}`)
     return DEFAULT_LT
   }
 
   // Get the threshold for this borrow asset
   const threshold = depositAsset.threshold_matrix[String(borrowCmcId)]
 
-  console.log(`[getPairLtByCmcIds] threshold_matrix[${borrowCmcId}] =`, threshold)
+  // console.log(`[getPairLtByCmcIds] threshold_matrix[${borrowCmcId}] =`, threshold)
 
   if (threshold == null) {
-    console.log(`[getPairLtByCmcIds] Threshold not found, returning default ${DEFAULT_LT}`)
+    // console.log(`[getPairLtByCmcIds] Threshold not found, returning default ${DEFAULT_LT}`)
     return DEFAULT_LT
   }
 
   // Thresholds in the matrix are percentages (85, 93, etc.)
   // Convert to decimal (0.85, 0.93, etc.)
   const result = threshold / 100
-  console.log(`[getPairLtByCmcIds] Returning threshold: ${threshold} → ${result}`)
+  // console.log(`[getPairLtByCmcIds] Returning threshold: ${threshold} → ${result}`)
   return result
 }
 
@@ -75,9 +75,9 @@ export function getPairLtFromRegistry(
   assetRegistry: AssetRegistry | null,
   riskRegistry: null | RiskRegistry,
 ): number {
-  console.log(
-    `[getPairLtFromRegistry] Called with deposit=${depositCmcId}, borrow=${borrowCmcId}, hasRegistry=${Boolean(assetRegistry && riskRegistry)}`,
-  )
+  // console.log(
+  // `[getPairLtFromRegistry] Called with deposit=${depositCmcId}, borrow=${borrowCmcId}, hasRegistry=${Boolean(assetRegistry && riskRegistry)}`,
+  // )
 
   // Try on-chain lookup first
   if (assetRegistry && riskRegistry) {
@@ -85,27 +85,27 @@ export function getPairLtFromRegistry(
     const depositMint = getMintByCmcId(depositCmcId)
     const borrowMint = getMintByCmcId(borrowCmcId)
 
-    console.log(`[getPairLtFromRegistry] Mints: deposit=${depositMint}, borrow=${borrowMint}`)
+    // console.log(`[getPairLtFromRegistry] Mints: deposit=${depositMint}, borrow=${borrowMint}`)
 
     if (depositMint && borrowMint) {
       // Get risk pair from on-chain registry
       const riskPair = getRiskPairForTokens(depositMint, borrowMint, assetRegistry, riskRegistry)
 
-      console.log(`[getPairLtFromRegistry] On-chain riskPair:`, riskPair)
+      // console.log(`[getPairLtFromRegistry] On-chain riskPair:`, riskPair)
 
       if (riskPair) {
         // Convert basis points to decimal (9300 bps → 0.93)
         const result = bpsToDecimal(riskPair.liqThresholdBps)
-        console.log(
-          `[getPairLtFromRegistry] Using on-chain: ${riskPair.liqThresholdBps} bps → ${result}`,
-        )
+        // console.log(
+        // `[getPairLtFromRegistry] Using on-chain: ${riskPair.liqThresholdBps} bps → ${result}`,
+        // )
         return result
       }
     }
   }
 
   // Fallback to JSON-based lookup
-  console.log(`[getPairLtFromRegistry] Falling back to JSON lookup`)
+  // console.log(`[getPairLtFromRegistry] Falling back to JSON lookup`)
   return getPairLtByCmcIds(depositCmcId, borrowCmcId)
 }
 
