@@ -62,7 +62,7 @@ export default function Leaderboard() {
   const endEntry = Math.min(page * PAGE_SIZE, totalEntries)
 
   return (
-    <Card className="border-foreground bg-card rounded-xs border-2 shadow lg:col-span-2">
+    <Card className="border-foreground bg-card m-4 rounded-xs border-2 shadow lg:col-span-2">
       <CardHeader className="flex items-center justify-between pb-3">
         <CardTitle className="font-semibold tracking-tight">Leaderboard</CardTitle>
       </CardHeader>

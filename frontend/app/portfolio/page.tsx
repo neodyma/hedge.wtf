@@ -173,7 +173,7 @@ export default function PortfolioPage() {
 
           <motion.div
             animate={{ opacity: 1, y: 0 }}
-            className="mx-16 mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2"
+            className="mx-4 mt-8 grid grid-cols-1 gap-8 md:mx-16 lg:grid-cols-2"
             initial={{ opacity: 0, y: 20 }}
             transition={{ delay: 0.2, duration: 0.4, ease: "easeOut" }}
           >

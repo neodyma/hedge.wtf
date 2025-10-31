@@ -54,7 +54,7 @@ export default function MarketPage() {
       initial={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
     >
-      <Card className="border-foreground bg-card scrollbar-hide rounded-xs border-2 shadow md:m-8">
+      <Card className="border-foreground bg-card scrollbar-hide m-4 rounded-xs border-2 shadow md:m-8">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="font-semibold tracking-tight">
             Market Overview (Devnet)
